@@ -6,35 +6,38 @@ import { getProjectSummary } from '../services/geminiService';
 import { getDepartmentImage, FALLBACK_IMAGE } from '../constants';
 import { MapPin, Calendar, Building2, Users, FileText, ArrowLeft, Send, Star, Share2, Edit3, Trash2, ShieldCheck, Mail, MessageCircle, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from './Layout';
+import { fetchFrappeProjectById, submitFeedbackToFrappe } from '../services/frappeAPI';
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, hasPermission } = useAuth();
   const [project, setProject] = useState<Project | undefined>(undefined);
-  
+
   const [aiSummary, setAiSummary] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
-  const [feedback, setFeedback] = useState({ userName: '', email: '', comment: '', rating: 5 });
+  const [feedback, setFeedback] = useState({ fullName: '', phone: '', email: '', comment: '', rating: 5 });
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [activeImage, setActiveImage] = useState<string>('');
 
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  if (id) {
-    setLoading(true);
-    fetchFrappeProjectById(id).then(p => {
-      if (p) {
-        setProject(p);
-        setActiveImage(
-          p.images?.[0] || getDepartmentImage(p.department)
-        );
-      }
-      setLoading(false);
-    });
-  }
-}, [id]);
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetchFrappeProjectById(id).then(p => {
+        if (p) {
+          setProject(p);
+          setActiveImage(
+            p.images?.[0] || getDepartmentImage(p.department)
+          );
+        }
+        setLoading(false);
+      });
+    }
+  }, [id]);
 
   useEffect(() => {
     if (project) {
@@ -70,21 +73,29 @@ useEffect(() => {
     }
   };
 
-  const handleSubmitFeedback = (e: React.FormEvent) => {
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newFeedback: Feedback = {
-      id: `f${Date.now()}`,
-      projectId: project.id,
-      userName: feedback.userName,
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    const success = await submitFeedbackToFrappe({
+      full_name: feedback.fullName,
+      phone: feedback.phone,
       email: feedback.email,
       comment: feedback.comment,
       rating: feedback.rating,
-      timestamp: new Date().toISOString()
-    };
-    db.feedback.add(newFeedback);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFeedback({ userName: '', email: '', comment: '', rating: 5 });
+      project: project.id,
+    });
+
+    setIsSubmitting(false);
+
+    if (success) {
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 4000);
+      setFeedback({ fullName: '', phone: '', email: '', comment: '', rating: 5 });
+    } else {
+      setSubmitError('Submission failed. Please try again.');
+    }
   };
 
   const handleDelete = async () => {
@@ -142,10 +153,10 @@ useEffect(() => {
           {/* Gallery Section */}
           <div className="bg-white p-4 rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
             <div className="relative h-[400px] w-full rounded-[2.5rem] overflow-hidden group">
-              <img 
-                src={activeImage || getDepartmentImage(project.department)} 
-                alt={project.title} 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+              <img
+                src={activeImage || getDepartmentImage(project.department)}
+                alt={project.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 onError={handleImageError}
               />
               <div className="absolute top-6 left-6">
@@ -157,8 +168,8 @@ useEffect(() => {
             {project.images && project.images.length > 1 && (
               <div className="flex gap-4 mt-6 px-4 pb-4 overflow-x-auto pb-2 scrollbar-hide">
                 {project.images.map((img, idx) => (
-                  <button 
-                    key={idx} 
+                  <button
+                    key={idx}
                     onClick={() => setActiveImage(img)}
                     className={`relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-4 transition-all ${activeImage === img ? 'tt-border-green scale-110 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
@@ -224,9 +235,78 @@ useEffect(() => {
               <div className="pt-8 border-t border-slate-100">
                 <h4 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><MessageCircle className="tt-green" size={20} /> Public Feedback</h4>
                 <form onSubmit={handleSubmitFeedback} className="space-y-4">
-                  <input type="text" required placeholder="Wananchi Name" className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none transition-all" value={feedback.userName} onChange={e => setFeedback({...feedback, userName: e.target.value})} />
-                  <textarea required rows={4} placeholder="Enter your observations..." className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none resize-none transition-all" value={feedback.comment} onChange={e => setFeedback({...feedback, comment: e.target.value})} />
-                  <button disabled={submitted} className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl ${submitted ? 'bg-green-50 text-tt-green border border-green-200' : 'tt-bg-green text-white shadow-green-100 hover:scale-[1.02] active:scale-95'}`}>{submitted ? <><ShieldCheck size={20} /> Feedback Sent</> : <><Send size={18} /> Submit Report</>}</button>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Full Name"
+                    className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none transition-all"
+                    value={feedback.fullName}
+                    onChange={e => setFeedback({ ...feedback, fullName: e.target.value })}
+                  />
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Phone Number"
+                    className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none transition-all"
+                    value={feedback.phone}
+                    onChange={e => setFeedback({ ...feedback, phone: e.target.value })}
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder="Email Address"
+                    className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none transition-all"
+                    value={feedback.email}
+                    onChange={e => setFeedback({ ...feedback, email: e.target.value })}
+                  />
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Enter your observations..."
+                    className="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-50 text-sm font-bold focus:bg-white focus:border-tt-green outline-none resize-none transition-all"
+                    value={feedback.comment}
+                    onChange={e => setFeedback({ ...feedback, comment: e.target.value })}
+                  />
+
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rating:</span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFeedback({ ...feedback, rating: star })}
+                        >
+                          <Star
+                            size={18}
+                            className={star <= feedback.rating ? 'text-tt-yellow fill-tt-yellow' : 'text-slate-200'}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {submitError && (
+                    <p className="text-xs font-bold text-rose-500">{submitError}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitted || isSubmitting}
+                    className={`w-full py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl ${submitted
+                        ? 'bg-green-50 text-tt-green border border-green-200'
+                        : 'tt-bg-green text-white shadow-green-100 hover:scale-[1.02] active:scale-95'
+                      }`}
+                  >
+                    {submitted ? (
+                      <><ShieldCheck size={20} /> Feedback Sent!</>
+                    ) : isSubmitting ? (
+                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</>
+                    ) : (
+                      <><Send size={18} /> Submit Report</>
+                    )}
+                  </button>
                 </form>
               </div>
             </div>

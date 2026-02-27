@@ -3,10 +3,15 @@ import { DEPARTMENTS, SUB_COUNTIES, WARDS, getDepartmentImage } from "../constan
 
 // TODO: Replace all URL with REMOTE_URL
 // const REMOTE_URL = "http://203.161.56.134:12001"
-const REMOTE_URL = "http://203.161.56.134:12001"
+// const REMOTE_URL = "http://203.161.56.134:12001"
 //TODO: Move API_KEY and API_SECRET to .env file and load using Vite's import.meta.env
-const API_KEY = "0a7e8376ab54c74"
-const API_SECRET = "861e2ca6562e160"
+// const API_KEY = "0a7e8376ab54c74"
+// const API_SECRET = "861e2ca6562e160"
+
+const REMOTE_URL = import.meta.env.VITE_API_URL
+const API_KEY = import.meta.env.VITE_API_KEY
+const API_SECRET = import.meta.env.VITE_API_SECRET
+
 
 // Frappe Response Types
 interface FrappeProject {
@@ -162,7 +167,6 @@ export const fetchFrappeProjects = async (
       console.log(`Fetched ${batch.length} projects (total so far: ${allProjects.length})`);
     }
 
-    // console.log(`✅ Total projects fetched: ${allProjects.length}`);
     return allProjects.map(transformFrappeProject);
     
   } catch (error) {
@@ -229,10 +233,49 @@ export const fetchFrappeProjectsByStatus = async (
  * Fetch and put user feedback from frappe to reactAPP
  */
 
-// Default export
+export const submitFeedbackToFrappe = async (payload: {
+  full_name: string;
+  phone:string;
+  email: string;
+  comment: string;
+  rating: number;
+  project: string; // This is the frappe document ID
+}): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `${REMOTE_URL}/api/resource/Project Feedback`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${API_KEY}:${API_SECRET}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Feedback submission error:', errorText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('Feedback submission result:', result);
+    return true;
+  } catch (error) {
+    console.error('Error submitting feedback to Frappe:', error);
+    return false;
+  }
+};
+
+  
 export default {
   fetchFrappeProjects,
+  fetchFrappeProjectById,
   fetchFrappeProjectsByYear,
   fetchFrappeProjectsBySubCounty,
   fetchFrappeProjectsByStatus,
+  submitFeedbackToFrappe,
 };
