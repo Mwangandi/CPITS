@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "axios": "^1.13.5",
+    "date-fns": "^4.1.0",
+    "localforage": "^1.10.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.91.3"
+  }
+}

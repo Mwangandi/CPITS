@@ -1,0 +1,7 @@
+{
+  "name": "Taita Taveta County PMTS",
+  "description": "A comprehensive project management and tracking system for Taita Taveta County, featuring dashboard analytics, project progress monitoring, PMC member management, and a public feedback mechanism.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
