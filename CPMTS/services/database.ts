@@ -1,6 +1,6 @@
 
 import { Project, User, Feedback, SystemSettings } from '../types';
-import { MOCK_PROJECTS, MOCK_USERS } from '../constants';
+import { MOCK_USERS } from '../constants';
 
 const DB_KEYS = {
   PROJECTS: 'tt_pmts_projects',
@@ -25,7 +25,6 @@ class Database {
       const parsed = JSON.parse(data);
       return parsed === null ? defaultValue : parsed;
     } catch (error) {
-      console.warn(`Database Read Error [${key}]:`, error);
       return defaultValue;
     }
   }
@@ -34,7 +33,6 @@ class Database {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`Database Write Error [${key}]:`, error);
     }
   }
 
@@ -46,7 +44,7 @@ class Database {
 
   // --- Projects ---
   projects = {
-    getAll: (): Project[] => this.get<Project[]>(DB_KEYS.PROJECTS, MOCK_PROJECTS),
+    getAll: (): Project[] => this.get<Project[]>(DB_KEYS.PROJECTS, []),
     getById: (id: string): Project | undefined => {
       const all = this.projects.getAll();
       return Array.isArray(all) ? all.find(p => p.id === id) : undefined;

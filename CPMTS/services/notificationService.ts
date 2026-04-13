@@ -1,6 +1,11 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { User } from "../types";
+
+// No API credentials in the frontend — the server-side proxy injects them.
+const PROXY_HEADERS = {
+  Accept: "application/json",
+  "Content-Type": "application/json",
+};
 
 export interface DeliveryStatus {
   success: boolean;
@@ -19,55 +24,118 @@ class NotificationService {
   }
 
   /**
-   * Uses Gemini to generate a professional audit log for the security team
+   * Normalise phone number to 2547XXXXXXXX format
    */
-  private async generateSecurityAudit(user: User, method: 'email' | 'sms'): Promise<string> {
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate a brief, 1-sentence technical audit log entry for a secure login attempt at Taita Taveta County. 
-        Staff: ${user.name} (Payroll: ${user.payrollNumber}). 
-        Method: ${method.toUpperCase()}. 
-        Context: Multi-factor authentication initiated from a browser in Kenya.`,
-      });
-      return response.text || "Security handshake completed successfully.";
-    } catch (error) {
-      return "Local security audit initiated (Offline fallback).";
-    }
+  private normalisePhone(phone: string): string {
+    let cleaned = phone.replace(/[\s\-\(\)]/g, "");
+    if (cleaned.startsWith("+")) cleaned = cleaned.slice(1);
+    if (cleaned.startsWith("0")) cleaned = "254" + cleaned.slice(1);
+    if (cleaned.startsWith("7") || cleaned.startsWith("1")) cleaned = "254" + cleaned;
+    return cleaned;
   }
 
   /**
    * Dispatches the OTP via the chosen channel
    */
   async sendOTP(user: User, method: 'email' | 'sms', code: string): Promise<DeliveryStatus> {
-    // In a production environment, this is where you would call:
-    // - Twilio API for SMS
-    // - EmailJS / SendGrid for Email
-    
-    const audit = await this.generateSecurityAudit(user, method);
-
-    // Simulating gateway latency
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     if (method === 'email') {
-      console.log(`[STAGING] Sending Email to ${user.email}: Your Taita Taveta OTP is ${code}`);
-      // Real implementation would look like: 
-      // await emailjs.send("service_id", "template_id", { to_name: user.name, code, to_email: user.email });
-      return { 
-        success: true, 
-        message: `Secure code dispatched to ${user.email}`,
-        auditLog: audit
-      };
+      try {
+        const response = await fetch(
+          `/proxy/send-email`,
+          {
+            method: "POST",
+            headers: PROXY_HEADERS,
+            body: JSON.stringify({
+              to: user.email,
+              subject: `CPMTS Staff Login - Verification Code: ${code}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 30px; background: #f8fafc; border-radius: 16px;">
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #1e293b; margin: 0;">Taita Taveta County</h2>
+                    <p style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Project Tracking System</p>
+                  </div>
+                  <div style="background: white; padding: 32px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0;">
+                    <p style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Hello <strong>${user.name}</strong>,</p>
+                    <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Your one-time verification code is:</p>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                      <span style="font-size: 36px; font-weight: 900; letter-spacing: 12px; color: #0f172a;">${code}</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+                  </div>
+                  <p style="color: #cbd5e1; font-size: 10px; text-align: center; margin-top: 16px;">
+                    County ICT & Service Delivery Unit
+                  </p>
+                </div>
+              `,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          return {
+            success: true,
+            message: `Secure code dispatched to ${user.email}`,
+            auditLog: `OTP email sent to ${user.email.replace(/(.{2}).*(@.*)/, '$1***$2')} via SMTP.`,
+          };
+        } else {
+          return {
+            success: false,
+            message: "Email gateway returned an error.",
+            auditLog: "Email dispatch failed — gateway error.",
+          };
+        }
+      } catch (err) {
+        return {
+          success: false,
+          message: "Failed to connect to email gateway.",
+          auditLog: "Email dispatch failed — network error.",
+        };
+      }
     } else {
-      console.log(`[STAGING] Sending SMS to ${user.phone}: Taita Taveta County Code: ${code}`);
-      // Real implementation would look like:
-      // await fetch('https://api.sms-gateway.com/send', { method: 'POST', body: JSON.stringify({ to: user.phone, msg: `Your code is ${code}` }) });
-      return { 
-        success: true, 
-        message: `SMS alert routed to ${user.phone}`,
-        auditLog: audit
-      };
+      // SMS via TextSMS gateway (proxied through /proxy/send-sms to avoid CORS)
+      try {
+        if (!user.phone) {
+          return {
+            success: false,
+            message: "No phone number on file. Please use email verification.",
+            auditLog: "SMS failed — no phone number.",
+          };
+        }
+
+        const mobile = this.normalisePhone(user.phone);
+        const smsMessage = `CPMTS Staff Login: Your verification code is ${code}. Valid for 10 minutes. Do not share this code.`;
+
+        const response = await fetch("/proxy/send-sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mobile, message: smsMessage }),
+        });
+
+        const result = await response.json();
+
+        // TextSMS returns { "responses": [{ "response-code": 200, ... }] }
+        const respCode = result?.responses?.[0]?.["response-code"];
+        if (response.ok && (respCode === 200 || respCode === "200")) {
+          const masked = mobile.slice(0, 6) + "***" + mobile.slice(-2);
+          return {
+            success: true,
+            message: `Verification code sent to ${masked}`,
+            auditLog: `OTP SMS sent to ${masked} via TextSMS gateway.`,
+          };
+        } else {
+          return {
+            success: false,
+            message: result?.responses?.[0]?.["response-description"] || "SMS gateway returned an error.",
+            auditLog: "SMS dispatch failed — gateway error.",
+          };
+        }
+      } catch (err) {
+        return {
+          success: false,
+          message: "Failed to connect to SMS gateway.",
+          auditLog: "SMS dispatch failed — network error.",
+        };
+      }
     }
   }
 }

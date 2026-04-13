@@ -19,7 +19,6 @@ const ProjectMap: React.FC<ProjectMapProps> = ({ projects }) => {
       case ProjectStatus.COMPLETED: return '#00843D'; // Green
       case ProjectStatus.ONGOING: return '#003399'; // Navy
       case ProjectStatus.STALLED: return '#F37021'; // Orange
-      case ProjectStatus.PLANNING: return '#FFCD00'; // Yellow
       case ProjectStatus.NOT_STARTED: return '#64748b'; // Slate
       default: return '#1e293b';
     }
@@ -136,10 +135,9 @@ const ProjectMap: React.FC<ProjectMapProps> = ({ projects }) => {
       <div ref={mapRef} className="h-full w-full" />
       <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white space-y-2 text-xs font-black uppercase tracking-widest text-slate-600">
          <p className="mb-2 pb-2 border-b border-slate-200">Map Legend</p>
-         <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full tt-bg-green"></div> Completed</div>
+         <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full tt-bg-green"></div> Complete</div>
          <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full tt-bg-navy"></div> Ongoing</div>
          <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full tt-bg-orange"></div> Stalled</div>
-         <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full tt-bg-yellow"></div> Planning</div>
          <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-slate-500"></div> Not Started</div>
       </div>
     </div>

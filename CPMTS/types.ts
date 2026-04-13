@@ -1,11 +1,9 @@
 
-// Fix: Added PLANNING status to resolve Property 'PLANNING' does not exist on type 'typeof ProjectStatus' errors.
 export enum ProjectStatus {
   NOT_STARTED = 'Not Started',
   ONGOING = 'Ongoing',
-  COMPLETED = 'Completed',
-  STALLED = 'Stalled',
-  PLANNING = 'Planning'
+  COMPLETED = 'Complete',
+  STALLED = 'Stalled'
 }
 
 export enum UserRole {
@@ -48,6 +46,13 @@ export interface PMCMember {
   name: string;
   role: string;
   contact?: string;
+}
+
+export interface ProjectDocument {
+  id: string;
+  documentType: string;
+  details: string;
+  attachUrl: string;
 }
 
 export interface Feedback {

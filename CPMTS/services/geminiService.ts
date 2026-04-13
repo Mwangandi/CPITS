@@ -20,16 +20,15 @@ export const getProjectSummary = async (project: Project): Promise<string> => {
     });
     return response.text || "Summary not available.";
   } catch (error) {
-    console.error("Gemini Error:", error);
     return "Failed to generate AI summary.";
   }
 };
 
 export const analyzeFeedback = async (feedbacks: Feedback[]): Promise<string> => {
   if (feedbacks.length === 0) return "No feedback to analyze.";
-  
+
   const textFeedbacks = feedbacks.map(f => `- ${f.comment} (Rating: ${f.rating}/5)`).join("\n");
-  
+
   try {
     // Initializing inside the function to ensure the correct API key is picked up from the environment
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -40,7 +39,6 @@ export const analyzeFeedback = async (feedbacks: Feedback[]): Promise<string> =>
     });
     return response.text || "Analysis not available.";
   } catch (error) {
-    console.error("Gemini Error:", error);
     return "Analysis failed.";
   }
 };

@@ -29,7 +29,6 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({ projects }) => {
       case ProjectStatus.COMPLETED: return 'tt-bg-green';
       case ProjectStatus.ONGOING: return 'tt-bg-navy';
       case ProjectStatus.STALLED: return 'tt-bg-orange';
-      case ProjectStatus.PLANNING: return 'tt-bg-yellow';
       default: return 'bg-slate-400';
     }
   };

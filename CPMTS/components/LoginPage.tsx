@@ -1,161 +1,333 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './Layout';
-import { TAITA_TAVETA_LOGO_SVG, MOCK_USERS } from '../constants';
-import { notificationService } from '../services/notificationService';
-import { 
-  ShieldCheck, Mail, Phone, ArrowRight, Loader2, 
-  AlertCircle, MessageCircle, ChevronLeft, Lock, 
-  Terminal, Server, Fingerprint 
+import { TAITA_TAVETA_LOGO_SVG } from '../constants';
+import { notificationService, DeliveryStatus } from '../services/notificationService';
+import { User, UserRole, Permission } from '../types';
+import {
+  ShieldCheck, Mail, ArrowRight, Loader2,
+  AlertCircle, Lock, Phone, Eye, EyeOff,
+  CheckCircle2, ArrowLeft
 } from 'lucide-react';
+
+type LoginStep = 'credentials' | 'otp-verify';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [payroll, setPayroll] = useState('');
-  const [otp, setOtp] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [step, setStep] = useState<'payroll' | 'choice' | 'otp'>('payroll');
-  const [deliveryMethod, setDeliveryMethod] = useState<'email' | 'sms' | null>(null);
+  const { login, user: authUser } = useAuth();
+
+  // Step management
+  const [step, setStep] = useState<LoginStep>('credentials');
+
+  // Step 1: Credentials
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [auditLog, setAuditLog] = useState<string>('');
 
-  // Get user details for masked info
-  const targetUser = MOCK_USERS.find(u => u.payrollNumber === payroll);
+  // Pending user (authenticated but not OTP-verified)
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
 
-  const handleVerifyPayroll = (e: React.FormEvent) => {
+  // Step 2/3: OTP
+  const otpMethod = 'sms' as const;
+  const [otpCode, setOtpCode] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpStatus, setOtpStatus] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '']);
+  const otpRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+
+  // Focus first OTP input when entering verify step
+  useEffect(() => {
+    if (step === 'otp-verify') {
+      setTimeout(() => otpRefs[0].current?.focus(), 100);
+    }
+  }, [step]);
+
+  // Step 1: Login with Frappe (authenticate but don't set user in context yet)
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
-    setTimeout(() => {
-      if (targetUser) {
-        setStep('choice');
-      } else {
-        setError('Payroll number not found in County Database.');
-      }
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleSendOTP = async (method: 'email' | 'sms') => {
-    if (!targetUser) return;
-    
-    setLoading(true);
-    setError('');
-    setDeliveryMethod(method);
-    
-    const newCode = notificationService.generateOTP();
-    setGeneratedOtp(newCode);
 
     try {
-      const result = await notificationService.sendOTP(targetUser, method, newCode);
-      if (result.success) {
-        setAuditLog(result.auditLog || '');
-        setStep('otp');
-      } else {
-        setError('Gateway connection failed. Please try an alternative method.');
+      // Authenticate with Frappe directly
+      const loginRes = await fetch('/api/method/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `usr=${encodeURIComponent(identifier)}&pwd=${encodeURIComponent(password)}`,
+        credentials: 'include',
+      });
+      if (!loginRes.ok) {
+        setError('Invalid credentials. Please check your email and password.');
+        setLoading(false);
+        return;
       }
+      const loginData = await loginRes.json();
+      if (loginData.message !== 'Logged In') {
+        setError('Invalid credentials. Please check your email and password.');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch user details
+      const userRes = await fetch('/api/method/frappe.client.get', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doctype: 'User', name: identifier }),
+        credentials: 'include',
+      });
+      const userData = userRes.ok ? await userRes.json() : null;
+      const frappeUser = userData?.message;
+
+      const roles: string[] = (frappeUser?.roles || []).map((r: any) => r.role);
+      let appRole = UserRole.STAFF;
+      if (roles.includes('Administrator') || roles.includes('System Manager')) {
+        appRole = UserRole.SUPER_ADMIN;
+      } else if (roles.includes('Projects Manager')) {
+        appRole = UserRole.ADMIN;
+      }
+
+      const allPermissions: Permission[] = [
+        'view_dashboard', 'view_projects', 'add_project', 'edit_project',
+        'delete_project', 'import_projects', 'manage_users', 'manage_feedback', 'manage_settings',
+      ];
+
+      const appUser: User = {
+        id: frappeUser?.name || identifier,
+        payrollNumber: '',
+        name: loginData.full_name || frappeUser?.full_name || identifier,
+        email: frappeUser?.email || identifier,
+        phone: frappeUser?.mobile_no || '',
+        role: appRole,
+        department: frappeUser?.department || '',
+        permissions: appRole === UserRole.SUPER_ADMIN ? allPermissions : ['view_dashboard', 'view_projects'],
+      };
+
+      // Store pending user for OTP but do NOT set in auth context yet
+      setPendingUser(appUser);
+
+      // Auto-send SMS OTP (email SMTP is blocked on this server)
+      setOtpSending(true);
+      setOtpError('');
+      setOtpStatus('');
+      const code = notificationService.generateOTP();
+      setGeneratedOtp(code);
+      const result: DeliveryStatus = await notificationService.sendOTP(appUser, 'sms', code);
+      if (result.success) {
+        setOtpStatus(result.message);
+        setStep('otp-verify');
+        setOtpDigits(['', '', '', '']);
+      } else {
+        setOtpError(result.message);
+      }
+      setOtpSending(false);
     } catch (err) {
-      setError('A network error occurred while reaching the notification server.');
+      setError('Connection failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  // Step 2: Send OTP via chosen method
+  const handleSendOtp = async () => {
+    if (!pendingUser) return;
+    setOtpSending(true);
+    setOtpError('');
+    setOtpStatus('');
 
-    // Simulate cryptographic verification
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const code = notificationService.generateOTP();
+    setGeneratedOtp(code);
 
-    if (otp === generatedOtp || (process.env.NODE_ENV === 'development' && otp === '1234')) {
-      const success = await login(payroll);
-      if (success) {
-        navigate('/');
-      } else {
-        setError('Session creation failed. Contact SDU support.');
+    const result: DeliveryStatus = await notificationService.sendOTP(pendingUser, otpMethod, code);
+
+    if (result.success) {
+      setOtpStatus(result.message);
+      setStep('otp-verify');
+      setOtpDigits(['', '', '', '']);
+    } else {
+      setOtpError(result.message);
+    }
+    setOtpSending(false);
+  };
+
+  // Step 3: Verify OTP
+  const handleVerifyOtp = () => {
+    const entered = otpDigits.join('');
+    if (entered === generatedOtp) {
+      // OTP verified — save user session and navigate
+      if (pendingUser) {
+        localStorage.setItem('tt_user_session', JSON.stringify(pendingUser));
+        window.location.hash = '#/';
+        window.location.reload();
       }
     } else {
-      setError('Invalid security code. Please check your device.');
-      setOtp('');
+      setOtpError('Invalid verification code. Please try again.');
+      setOtpDigits(['', '', '', '']);
+      setTimeout(() => otpRefs[0].current?.focus(), 100);
     }
-    setLoading(false);
   };
 
-  const maskEmail = (email: string) => {
-    const [name, domain] = email.split('@');
-    return `${name[0]}***${name[name.length-1]}@${domain}`;
+  // OTP digit input handler
+  const handleOtpDigit = (index: number, value: string) => {
+    if (!/^\d?$/.test(value)) return;
+    const newDigits = [...otpDigits];
+    newDigits[index] = value;
+    setOtpDigits(newDigits);
+    setOtpError('');
+
+    if (value && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+
+    // Auto-verify when all 4 digits entered
+    if (value && index === 3 && newDigits.every(d => d !== '')) {
+      setTimeout(() => {
+        const entered = newDigits.join('');
+        if (entered === generatedOtp) {
+          if (pendingUser) {
+            localStorage.setItem('tt_user_session', JSON.stringify(pendingUser));
+            window.location.hash = '#/';
+            window.location.reload();
+          }
+        } else {
+          setOtpError('Invalid verification code. Please try again.');
+          setOtpDigits(['', '', '', '']);
+          setTimeout(() => otpRefs[0].current?.focus(), 100);
+        }
+      }, 200);
+    }
   };
 
-  const maskPhone = (phone: string) => {
-    return `${phone.substring(0, 3)}****${phone.substring(phone.length - 2)}`;
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
   };
+
+  // Resend OTP
+  const handleResend = async () => {
+    await handleSendOtp();
+  };
+
+  // Step indicator
+  const steps = [
+    { num: 1, label: 'Sign In' },
+    { num: 2, label: 'OTP' },
+  ];
+  const currentStepNum = step === 'credentials' ? 1 : 2;
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 animate-fade-in">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center relative overflow-hidden">
-        {/* Step Indicator (Top Bar) */}
-        <div className="absolute top-0 left-0 w-full h-1.5 flex bg-slate-50">
-          <div className={`h-full tt-bg-green transition-all duration-500 ${step === 'payroll' ? 'w-1/3' : step === 'choice' ? 'w-2/3' : 'w-full'}`}></div>
-        </div>
+    <div className="min-h-[70vh] flex items-center justify-center py-8 sm:py-12 px-4 animate-fade-in">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8 bg-white p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-slate-100 text-center relative overflow-hidden">
 
-        <div className="flex flex-col items-center gap-6 pt-4">
-          <div className="w-28 h-28 bg-white rounded-3xl flex items-center justify-center p-3 shadow-md border border-slate-100 overflow-hidden">
+        {/* Logo + Title */}
+        <div className="flex flex-col items-center gap-4 sm:gap-6 pt-2 sm:pt-4">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-white rounded-2xl sm:rounded-3xl flex items-center justify-center p-2 sm:p-3 shadow-md border border-slate-100 overflow-hidden">
             {TAITA_TAVETA_LOGO_SVG}
           </div>
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-              {step === 'payroll' && 'Staff Access'}
-              {step === 'choice' && 'Identity Verification'}
-              {step === 'otp' && 'Verify Code'}
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Staff Access</h2>
             <p className="text-slate-500 font-bold mt-2 uppercase text-[10px] tracking-[0.2em]">County Government of Taita Taveta</p>
           </div>
         </div>
 
-        {error && (
-          <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold text-left animate-in shake-1 duration-300">
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center gap-0 py-2">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.num}>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm transition-all duration-300 ${s.num < currentStepNum
+                  ? 'bg-green-500 text-white scale-90'
+                  : s.num === currentStepNum
+                    ? 'tt-bg-navy text-white scale-110 shadow-lg shadow-blue-200'
+                    : 'bg-slate-100 text-slate-400'
+                  }`}>
+                  {s.num < currentStepNum ? <CheckCircle2 size={20} /> : s.num}
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${s.num === currentStepNum ? 'tt-navy' : 'text-slate-400'
+                  }`}>{s.label}</span>
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`w-12 h-0.5 mx-1 mb-5 transition-all ${s.num < currentStepNum ? 'bg-green-400' : 'bg-slate-200'
+                  }`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Error / Status Messages */}
+        {(error || otpError) && (
+          <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold text-left">
             <AlertCircle size={20} className="flex-shrink-0" />
-            <p>{error}</p>
+            <p>{error || otpError}</p>
+          </div>
+        )}
+        {otpStatus && step === 'otp-verify' && (
+          <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center gap-3 text-green-700 text-sm font-bold text-left">
+            <CheckCircle2 size={20} className="flex-shrink-0" />
+            <p>{otpStatus}</p>
           </div>
         )}
 
-        {/* STEP 1: Payroll Entry */}
-        {step === 'payroll' && (
-          <form onSubmit={handleVerifyPayroll} className="space-y-6">
+        {/* ──────── STEP 1: Credentials ──────── */}
+        {step === 'credentials' && (
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2 text-left">
-              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Payroll Number</label>
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email or Mobile Number</label>
               <div className="relative">
-                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                <input 
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
                   type="text"
                   required
-                  placeholder="e.g. 777001"
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-tt-green outline-none font-black text-slate-700 transition-all text-lg shadow-inner"
-                  value={payroll}
-                  onChange={(e) => setPayroll(e.target.value)}
+                  placeholder="e.g. user@taitataveta.go.ke"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-tt-green outline-none font-bold text-slate-700 transition-all text-sm shadow-inner"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                 />
-              </div>
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-4">
-                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
-                   Authorized personnel only. Sessions are monitored by the Service Delivery Unit (SDU).
-                </p>
               </div>
             </div>
 
-            <button 
+            <div className="space-y-2 text-left">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Enter your password"
+                  className="w-full pl-12 pr-12 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-tt-green outline-none font-bold text-slate-700 transition-all text-sm shadow-inner"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-relaxed">
+                Authorized personnel only. Sessions are monitored by the Service Delivery Unit (SDU).
+              </p>
+            </div>
+
+            <button
               type="submit"
               disabled={loading}
               className="w-full py-5 tt-bg-green text-white rounded-2xl font-black shadow-xl shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {loading ? <Loader2 className="animate-spin" size={24} /> : (
                 <>
-                  Verify Credentials
+                  <ShieldCheck size={20} />
+                  Sign In
                   <ArrowRight size={20} />
                 </>
               )}
@@ -163,121 +335,67 @@ const LoginPage: React.FC = () => {
           </form>
         )}
 
-        {/* STEP 2: Delivery Choice */}
-        {step === 'choice' && targetUser && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="text-left bg-slate-900 text-white p-6 rounded-[2rem] border-b-4 border-tt-green shadow-xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform">
-                <Fingerprint size={80} />
-              </div>
-              <p className="text-[10px] font-black text-tt-yellow uppercase tracking-widest mb-1 relative z-10">Access Profile Confirmed</p>
-              <p className="text-xl font-black relative z-10 truncate">{targetUser.name}</p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 relative z-10">{targetUser.role} • {targetUser.department || 'Executive'}</p>
+        {/* OTP method selection removed — SMS only (SMTP blocked on server) */}
+
+        {/* ──────── STEP 3: Enter OTP ──────── */}
+        {step === 'otp-verify' && (
+          <div className="space-y-6">
+            <div className="text-left">
+              <p className="text-sm text-slate-600 font-bold mb-1">Enter the 4-digit code</p>
+              <p className="text-xs text-slate-400 font-bold">
+                Sent via SMS to{' '}
+                <span className="text-slate-600">
+                  {pendingUser?.phone?.slice(0, 4) + '***' + (pendingUser?.phone?.slice(-3) || '')}
+                </span>
+              </p>
             </div>
 
-            <p className="text-sm font-bold text-slate-600 mb-6">Choose your preferred verification channel:</p>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <button 
-                onClick={() => handleSendOTP('email')}
-                disabled={loading}
-                className="group flex items-center gap-5 p-5 bg-white border-2 border-slate-100 rounded-[2rem] text-left hover:border-tt-green hover:bg-green-50/30 transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                <div className="p-4 bg-slate-50 rounded-2xl text-slate-400 group-hover:tt-bg-green group-hover:text-white transition-all shadow-sm">
-                  <Mail size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-slate-800">Official Email</p>
-                  <p className="text-xs font-bold text-slate-400 mt-0.5">{maskEmail(targetUser.email)}</p>
-                </div>
-                {loading && deliveryMethod === 'email' ? <Loader2 className="animate-spin ml-auto tt-green" /> : <div className="ml-auto w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:tt-green transition-all"><ArrowRight size={16} /></div>}
-              </button>
+            {/* 4 digit boxes */}
+            <div className="flex justify-center gap-3 sm:gap-4">
+              {otpDigits.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={otpRefs[i]}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpDigit(i, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                  className="w-14 h-14 sm:w-16 sm:h-16 text-center text-xl sm:text-2xl font-black rounded-xl sm:rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-tt-navy outline-none transition-all shadow-inner"
+                />
+              ))}
+            </div>
 
-              <button 
-                onClick={() => handleSendOTP('sms')}
-                disabled={loading}
-                className="group flex items-center gap-5 p-5 bg-white border-2 border-slate-100 rounded-[2rem] text-left hover:border-tt-navy hover:bg-blue-50/30 transition-all active:scale-[0.98] disabled:opacity-50"
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setStep('credentials'); setError(''); setPendingUser(null); setOtpError(''); setOtpStatus(''); }}
+                className="px-6 py-4 rounded-2xl border-2 border-slate-100 text-slate-500 font-black hover:bg-slate-50 transition-all flex items-center gap-2"
               >
-                <div className="p-4 bg-slate-50 rounded-2xl text-slate-400 group-hover:tt-bg-navy group-hover:text-white transition-all shadow-sm">
-                  <MessageCircle size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-slate-800">Verified Mobile</p>
-                  <p className="text-xs font-bold text-slate-400 mt-0.5">{maskPhone(targetUser.phone)}</p>
-                </div>
-                {loading && deliveryMethod === 'sms' ? <Loader2 className="animate-spin ml-auto tt-navy" /> : <div className="ml-auto w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:tt-navy transition-all"><ArrowRight size={16} /></div>}
+                <ArrowLeft size={18} />
+                Back
+              </button>
+              <button
+                onClick={handleVerifyOtp}
+                disabled={otpDigits.some(d => d === '')}
+                className="flex-1 py-4 tt-bg-green text-white rounded-2xl font-black shadow-xl shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                <ShieldCheck size={20} />
+                Verify & Continue
               </button>
             </div>
 
-            <button 
-              onClick={() => setStep('payroll')}
-              className="flex items-center gap-2 mx-auto mt-6 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-tt-green transition-colors"
+            <button
+              onClick={handleResend}
+              disabled={otpSending}
+              className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-tt-navy transition-colors disabled:opacity-50"
             >
-              <ChevronLeft size={14} />
-              Return to Credentials
+              {otpSending ? 'Sending...' : 'Resend Code'}
             </button>
           </div>
         )}
 
-        {/* STEP 3: OTP Entry */}
-        {step === 'otp' && (
-          <form onSubmit={handleVerifyOTP} className="space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="bg-slate-900 p-6 rounded-[2rem] border-b-4 border-tt-green text-left space-y-4">
-              <div className="flex items-center gap-3 text-tt-yellow">
-                <Server size={18} className="animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Gateway Log</span>
-              </div>
-              <div className="font-mono text-[10px] text-green-400/80 leading-relaxed overflow-hidden">
-                <p className="flex items-center gap-2"><span className="text-green-500/40">[{new Date().toLocaleTimeString()}]</span> HANDSHAKE SUCCESSFUL</p>
-                <p className="flex items-center gap-2"><span className="text-green-500/40">[{new Date().toLocaleTimeString()}]</span> {auditLog || 'AUDITING PAYLOAD...'}</p>
-                <p className="flex items-center gap-2 text-white font-bold animate-pulse mt-2"><span className="tt-yellow"></span> Awaiting User Verification...</p>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-left">
-              <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center block w-full">Authentication Token</label>
-              <input 
-                type="text"
-                required
-                maxLength={4}
-                placeholder="0 0 0 0"
-                className="w-full py-5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-tt-green outline-none font-black text-slate-800 transition-all text-center text-4xl tracking-[1rem] shadow-inner"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                autoFocus
-              />
-              <p className="text-[10px] text-slate-400 font-bold mt-4 text-center uppercase tracking-widest">The code was sent to your <b>{deliveryMethod === 'email' ? 'Email' : 'Mobile'}</b></p>
-              {process.env.NODE_ENV === 'development' && (
-                <div className="bg-blue-50 p-2 rounded-lg text-center mt-2">
-                   <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">Debug Code: {generatedOtp}</p>
-                </div>
-              )}
-            </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full py-5 tt-bg-navy text-white rounded-2xl font-black shadow-xl shadow-blue-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="animate-spin" size={24} /> : (
-                <>
-                  <Lock size={18} />
-                  Authorize Session
-                </>
-              )}
-            </button>
-
-            <button 
-              type="button"
-              onClick={() => setStep('choice')}
-              className="text-slate-400 text-sm font-black hover:text-tt-navy uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
-            >
-              <ChevronLeft size={16} />
-              Re-send or Change Method
-            </button>
-          </form>
-        )}
-
+        {/* Footer */}
         <div className="pt-8 border-t border-slate-50 flex flex-col items-center gap-4">
           <div className="flex gap-6">
             <div className="flex items-center gap-2 text-slate-300">

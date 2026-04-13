@@ -1,0 +1,463 @@
+2026-04-01 02:34:50: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:34:50:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:34:50:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:34:50:     at Server.listen (node:net:2110:7)
+2026-04-01 02:34:50:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:34:50:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:34:50:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:34:50:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:34:50:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:34:50:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:34:50:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:34:50:   code: 'EADDRINUSE',
+2026-04-01 02:34:50:   errno: -98,
+2026-04-01 02:34:50:   syscall: 'listen',
+2026-04-01 02:34:50:   address: '::',
+2026-04-01 02:34:50:   port: 3001
+2026-04-01 02:34:50: }
+2026-04-01 02:34:54: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:34:54:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:34:54:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:34:54:     at Server.listen (node:net:2110:7)
+2026-04-01 02:34:54:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:34:54:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:34:54:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:34:54:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:34:54:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:34:54:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:34:54:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:34:54:   code: 'EADDRINUSE',
+2026-04-01 02:34:54:   errno: -98,
+2026-04-01 02:34:54:   syscall: 'listen',
+2026-04-01 02:34:54:   address: '::',
+2026-04-01 02:34:54:   port: 3001
+2026-04-01 02:34:54: }
+2026-04-01 02:34:57: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:34:57:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:34:57:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:34:57:     at Server.listen (node:net:2110:7)
+2026-04-01 02:34:57:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:34:57:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:34:57:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:34:57:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:34:57:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:34:57:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:34:57:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:34:57:   code: 'EADDRINUSE',
+2026-04-01 02:34:57:   errno: -98,
+2026-04-01 02:34:57:   syscall: 'listen',
+2026-04-01 02:34:57:   address: '::',
+2026-04-01 02:34:57:   port: 3001
+2026-04-01 02:34:57: }
+2026-04-01 02:35:00: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:00:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:00:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:00:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:00:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:00:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:00:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:00:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:00:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:00:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:00:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:00:   code: 'EADDRINUSE',
+2026-04-01 02:35:00:   errno: -98,
+2026-04-01 02:35:00:   syscall: 'listen',
+2026-04-01 02:35:00:   address: '::',
+2026-04-01 02:35:00:   port: 3001
+2026-04-01 02:35:00: }
+2026-04-01 02:35:04: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:04:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:04:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:04:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:04:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:04:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:04:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:04:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:04:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:04:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:04:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:04:   code: 'EADDRINUSE',
+2026-04-01 02:35:04:   errno: -98,
+2026-04-01 02:35:04:   syscall: 'listen',
+2026-04-01 02:35:04:   address: '::',
+2026-04-01 02:35:04:   port: 3001
+2026-04-01 02:35:04: }
+2026-04-01 02:35:07: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:07:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:07:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:07:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:07:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:07:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:07:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:07:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:07:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:07:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:07:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:07:   code: 'EADDRINUSE',
+2026-04-01 02:35:07:   errno: -98,
+2026-04-01 02:35:07:   syscall: 'listen',
+2026-04-01 02:35:07:   address: '::',
+2026-04-01 02:35:07:   port: 3001
+2026-04-01 02:35:07: }
+2026-04-01 02:35:11: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:11:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:11:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:11:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:11:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:11:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:11:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:11:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:11:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:11:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:11:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:11:   code: 'EADDRINUSE',
+2026-04-01 02:35:11:   errno: -98,
+2026-04-01 02:35:11:   syscall: 'listen',
+2026-04-01 02:35:11:   address: '::',
+2026-04-01 02:35:11:   port: 3001
+2026-04-01 02:35:11: }
+2026-04-01 02:35:14: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:14:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:14:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:14:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:14:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:14:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:14:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:14:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:14:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:14:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:14:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:14:   code: 'EADDRINUSE',
+2026-04-01 02:35:14:   errno: -98,
+2026-04-01 02:35:14:   syscall: 'listen',
+2026-04-01 02:35:14:   address: '::',
+2026-04-01 02:35:14:   port: 3001
+2026-04-01 02:35:14: }
+2026-04-01 02:35:18: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:18:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:18:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:18:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:18:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:18:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:18:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:18:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:18:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:18:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:18:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:18:   code: 'EADDRINUSE',
+2026-04-01 02:35:18:   errno: -98,
+2026-04-01 02:35:18:   syscall: 'listen',
+2026-04-01 02:35:18:   address: '::',
+2026-04-01 02:35:18:   port: 3001
+2026-04-01 02:35:18: }
+2026-04-01 02:35:21: Error: listen EADDRINUSE: address already in use :::3001
+2026-04-01 02:35:21:     at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+2026-04-01 02:35:21:     at listenInCluster (node:net:2005:12)
+2026-04-01 02:35:21:     at Server.listen (node:net:2110:7)
+2026-04-01 02:35:21:     at app.listen (/home/frappe/project_management/file-proxy/node_modules/express/lib/application.js:635:24)
+2026-04-01 02:35:21:     at Object.<anonymous> (/home/frappe/project_management/file-proxy/server.js:386:5)
+2026-04-01 02:35:21:     at Module._compile (node:internal/modules/cjs/loader:1812:14)
+2026-04-01 02:35:21:     at Object..js (node:internal/modules/cjs/loader:1943:10)
+2026-04-01 02:35:21:     at Module.load (node:internal/modules/cjs/loader:1533:32)
+2026-04-01 02:35:21:     at Module._load (node:internal/modules/cjs/loader:1335:12)
+2026-04-01 02:35:21:     at Object.<anonymous> (/home/frappe/.npm-global/lib/node_modules/pm2/lib/ProcessContainerFork.js:33:23) {
+2026-04-01 02:35:21:   code: 'EADDRINUSE',
+2026-04-01 02:35:21:   errno: -98,
+2026-04-01 02:35:21:   syscall: 'listen',
+2026-04-01 02:35:21:   address: '::',
+2026-04-01 02:35:21:   port: 3001
+2026-04-01 02:35:21: }
+2026-04-01 13:18:51: [ERROR] /files/KALOLENI BRIDGE-20250303T054014Z-001/KALOLENI BRIDGE/IMG_20250227_111008_HDR.jpg: Upstream 404
+2026-04-01 13:19:02: [ERROR] /files/KALOLENI BRIDGE-20250303T054014Z-001/KALOLENI BRIDGE/IMG_20250227_111008_HDR.jpg: Upstream 404
+2026-04-01 13:19:53: [ERROR] /files/KALOLENI BRIDGE-20250303T054014Z-001/KALOLENI BRIDGE/IMG_20250227_111008_HDR.jpg: Upstream 404
+2026-04-01 13:27:36: [ERROR] /private/files/Screenshot-102.png: Upstream 403
+2026-04-01 13:27:46: [ERROR] /private/files/Screenshot-102.png: Upstream 403
+2026-04-01 13:30:41: [ERROR] /private/files/IMG_1982.JPG: Upstream 403
+2026-04-01 13:30:41: [ERROR] /private/files/IMG_2081.JPG: Upstream 403
+2026-04-01 13:30:41: [ERROR] /private/files/IMG_2038.JPG: Upstream 403
+2026-04-01 13:30:43: [ERROR] /private/files/IMG_1910.JPG: Upstream 403
+2026-04-01 13:30:43: [ERROR] /private/files/IMG_1982.JPG: Upstream 403
+2026-04-01 13:30:43: [ERROR] /private/files/IMG_1965.JPG: Upstream 403
+2026-04-01 13:30:44: [ERROR] /private/files/IMG_1911.JPG: Upstream 403
+2026-04-01 13:30:44: [ERROR] /private/files/IMG_1982.JPG: Upstream 403
+2026-04-01 13:30:44: [ERROR] /private/files/IMG_1965.JPG: Upstream 403
+2026-04-01 13:30:45: [ERROR] /private/files/IMG_1911.JPG: Upstream 403
+2026-04-01 13:30:45: [ERROR] /private/files/IMG_1910.JPG: Upstream 403
+2026-04-01 13:30:45: [ERROR] /private/files/IMG_1999.JPG: Upstream 403
+2026-04-01 13:32:06: [ERROR] /private/files/IMG_1914.JPG: Upstream 403
+2026-04-01 13:32:06: [ERROR] /private/files/IMG_1973.JPG: Upstream 403
+2026-04-01 13:32:19: [ERROR] /private/files/IMG_2068.JPG: Upstream 403
+2026-04-01 13:32:19: [ERROR] /private/files/IMG_1982.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_2041.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_2032.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_2038.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_2081.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_1911.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_1965.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_1999.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_1973.JPG: Upstream 403
+2026-04-01 13:32:20: [ERROR] /private/files/IMG_1914.JPG: Upstream 403
+2026-04-01 13:32:21: [ERROR] /private/files/IMG_1910.JPG: Upstream 403
+2026-04-01 13:35:04: [SESSION] No valid sid cookie in response
+2026-04-01 13:35:04: [STARTUP] Could not establish Frappe session — private files may fail
+2026-04-01 13:36:36: [SESSION] No valid sid cookie in response
+2026-04-01 13:36:36: [ERROR] /private/files/IMG_2081.JPG: Upstream 403
+2026-04-01 13:36:37: [SESSION] No valid sid cookie in response
+2026-04-01 13:36:37: [ERROR] /private/files/IMG_2070.JPG: Upstream 403
+2026-04-01 13:36:37: [ERROR] /private/files/IMG_2106.JPG: Upstream 403
+2026-04-01 13:36:45: [SESSION] No valid sid cookie in response
+2026-04-01 13:36:45: [ERROR] /private/files/IMG_2081.JPG: Upstream 403
+2026-04-01 13:36:45: [ERROR] /private/files/IMG_2070.JPG: Upstream 403
+2026-04-01 13:39:03: [SESSION] No valid sid cookie in response
+2026-04-01 13:39:05: [SESSION] No valid sid cookie in response
+2026-04-01 13:39:05: [ERROR] /private/files/Rehabilitation of playing fields josa( wusi kishamba  wdf).jpeg: Upstream 403
+2026-04-01 13:39:06: [SESSION] No valid sid cookie in response
+2026-04-01 13:39:06: [ERROR] /private/files/Rehabilitation of playing field mreshinyi.jpeg: Upstream 403
+2026-04-01 13:40:44: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:44: [ERROR] /private/files/Modambogho Dispensary Maternity Wing and Lab-3.487455.jpeg: Upstream 403
+2026-04-01 13:40:47: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:47: [ERROR] /private/files/Mwasinenyi cooling plant KPLC and operatizational-3.436675.jpeg: Upstream 403
+2026-04-01 13:40:48: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:48: [ERROR] /private/files/Kidaya saghaighu primary ground.jpeg: Upstream 403
+2026-04-01 13:40:48: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:49: [ERROR] /private/files/Mrabenyi ECDE -3.40814.jpeg: Upstream 403
+2026-04-01 13:40:49: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:50: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:51: [ERROR] /private/files/Ecde construction and rehabilitation ndembonyi ecde.jpeg: Upstream 403
+2026-04-01 13:40:51: [ERROR] /private/files/Mariwenyi ECDE -3.441730.jpeg: Upstream 403
+2026-04-01 13:40:51: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:51: [ERROR] /private/files/Shelemba ECDE -3.434314.jpeg: Upstream 403
+2026-04-01 13:40:52: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:52: [ERROR] /private/files/Chungaunga ECDE.jpeg: Upstream 403
+2026-04-01 13:40:53: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:53: [ERROR] /private/files/Kamtonga Public Toilet.jpeg: Upstream 403
+2026-04-01 13:40:54: [SESSION] No valid sid cookie in response
+2026-04-01 13:40:55: [ERROR] /private/files/Barawa ECDE -3.498187.jpeg: Upstream 403
+2026-04-01 13:41:00: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:01: [ERROR] /private/files/Mwatate ecde-3.503188.jpeg: Upstream 403
+2026-04-01 13:41:02: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:02: [ERROR] /private/files/Josa modambogho (wusi kishamba ward)WDF.jpeg: Upstream 403
+2026-04-01 13:41:02: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:02: [ERROR] /private/files/Murray josa.jpeg: Upstream 403
+2026-04-01 13:41:02: [ERROR] /private/files/Buro mararo road.jpeg: Upstream 403
+2026-04-01 13:41:02: [ERROR] /private/files/Mwangoji kisaghala mreshinyi road.jpeg: Upstream 403
+2026-04-01 13:41:03: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:03: [ERROR] /private/files/Kilulunyi vichwala road.jpeg: Upstream 403
+2026-04-01 13:41:03: [ERROR] /private/files/IMG_1605.JPG: Upstream 403
+2026-04-01 13:41:04: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:04: [ERROR] /private/files/Nganjinyi ECDE -3.434643.jpeg: Upstream 403
+2026-04-01 13:41:04: [ERROR] /private/files/Shelemba Maternity Block -3.433918.jpeg: Upstream 403
+2026-04-01 13:41:05: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:05: [ERROR] /private/files/Mwakaleri ECDE -3.356297.jpeg: Upstream 403
+2026-04-01 13:41:06: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:06: [ERROR] /private/files/RAHAI ECDE -3.379925.jpeg: Upstream 403
+2026-04-01 13:41:06: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:06: [ERROR] /private/files/Rong'e ECDE -3.336523.jpeg: Upstream 403
+2026-04-01 13:41:06: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:06: [ERROR] /private/files/Mwakinyingu ECDE -3.4265578.jpeg: Upstream 403
+2026-04-01 13:41:07: [SESSION] No valid sid cookie in response
+2026-04-01 13:41:07: [ERROR] /private/files/Marumbenyi ECDE -3.4293943.jpeg: Upstream 403
+2026-04-01 13:47:20: [ERROR] /private/files/Screenshot-102.png: Upstream 403
+2026-04-01 13:50:39: [ERROR] /private/files/Rehabilitation of playing field mreshinyi.jpeg: Upstream 403
+2026-04-01 13:50:39: [ERROR] /private/files/Rehabilitation of playing fields josa( wusi kishamba  wdf).jpeg: Upstream 403
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:45: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:46: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:47: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:48: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:24:49: [RATE] Limit exceeded for 197.138.144.10
+2026-04-05 04:35:02: [ERROR] /private/files/Screenshot-102.png: Upstream 403
+2026-04-05 04:36:44: [ERROR] /private/files/Barawa ECDE -3.498187.jpeg: Upstream 403
+2026-04-05 04:36:55: [ERROR] /private/files/Barawa ECDE -3.498187.jpeg: Upstream 403
+2026-04-05 04:37:05: [ERROR] /private/files/Barawa ECDE -3.498187.jpeg: Upstream 403
+2026-04-05 04:37:31: [ERROR] /private/files/Barawa ECDE -3.498187.jpeg: Upstream 403
+2026-04-05 04:50:15: [ERROR] /files/Screenshot-102.png: Upstream 404
+2026-04-05 04:50:25: [ERROR] /files/Screenshot-102.png: Upstream 404
+2026-04-07 07:51:24: TypeError: Cannot destructure property 'to' of 'req.body' as it is undefined.
+2026-04-07 07:51:24:     at /home/frappe/project_management/file-proxy/server.js:470:11
+2026-04-07 07:51:24:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 07:51:24:     at next (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:149:13)
+2026-04-07 07:51:24:     at rateLimit (/home/frappe/project_management/file-proxy/server.js:142:12)
+2026-04-07 07:51:24:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 07:51:24:     at next (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:149:13)
+2026-04-07 07:51:24:     at Route.dispatch (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:119:3)
+2026-04-07 07:51:24:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 07:51:24:     at /home/frappe/project_management/file-proxy/node_modules/express/lib/router/index.js:284:15
+2026-04-07 07:51:24:     at router.process_params (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/index.js:346:12)
+2026-04-07 07:52:57: [EMAIL] SMTP verification failed: Connection timeout
+2026-04-07 08:01:47: TypeError: Cannot destructure property 'to' of 'req.body' as it is undefined.
+2026-04-07 08:01:47:     at /home/frappe/project_management/file-proxy/server.js:470:11
+2026-04-07 08:01:47:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 08:01:47:     at next (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:149:13)
+2026-04-07 08:01:47:     at rateLimit (/home/frappe/project_management/file-proxy/server.js:150:10)
+2026-04-07 08:01:47:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 08:01:47:     at next (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:149:13)
+2026-04-07 08:01:47:     at Route.dispatch (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/route.js:119:3)
+2026-04-07 08:01:47:     at Layer.handle [as handle_request] (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/layer.js:95:5)
+2026-04-07 08:01:47:     at /home/frappe/project_management/file-proxy/node_modules/express/lib/router/index.js:284:15
+2026-04-07 08:01:47:     at router.process_params (/home/frappe/project_management/file-proxy/node_modules/express/lib/router/index.js:346:12)
+2026-04-07 08:15:53: [EMAIL] SMTP verification failed: connect ENETUNREACH 2607:f8b0:4004:c07::6c:465 - Local (:::0)
+2026-04-07 08:20:26: [EMAIL] SMTP verification failed: connect ENETUNREACH 2607:f8b0:4004:c1b::6c:465 - Local (:::0)
+2026-04-07 08:21:32: [EMAIL] Error sending to pattersonroge12@gmail.com: Connection timeout
+2026-04-07 08:34:37: [EMAIL] SMTP verification failed: connect ENETUNREACH 2607:f8b0:4002:c0f::6d:465 - Local (:::0)
+2026-04-07 10:51:20: [EMAIL] SMTP verification failed: connect ENETUNREACH 2607:f8b0:4004:c06::6d:465 - Local (:::0)
+2026-04-07 10:57:07: [EMAIL] SMTP verification failed: Connection timeout
+2026-04-07 13:00:07: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:03:53: [FRAPPE-API] Blocked access to doctype: User
+2026-04-07 13:04:23: [FRAPPE-API] Blocked access to doctype: User
+2026-04-07 13:04:36: [FRAPPE-API] Blocked access to doctype: Employee
+2026-04-07 13:10:37: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:10:37: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:10:37: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:10:38: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:10:38: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:10:38: [RATE] Limit exceeded for 129.222.187.211
+2026-04-07 13:26:20: [RATE] Limit exceeded for 129.222.187.211
+2026-04-08 04:02:40: [EMAIL] SMTP verification failed: connect ENETUNREACH 2607:f8b0:4004:c17::6d:465 - Local (:::0)
+2026-04-08 06:05:31: [RATE] Limit exceeded for 129.222.187.131
+2026-04-08 06:05:31: [RATE] Limit exceeded for 129.222.187.131
+2026-04-08 09:23:44: [FRAPPE-API] Blocked access to doctype: Projectx
+2026-04-08 09:24:00: [FRAPPE-API] Blocked access to doctype: Projectx
+2026-04-08 11:53:31: [RATE] Limit exceeded for 129.222.147.235
+2026-04-08 11:53:31: [RATE] Limit exceeded for 129.222.147.235
+2026-04-08 18:03:59: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:03:59: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:00: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:00: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:00: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:15: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:18: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:19: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:21: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:22: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:23: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 18:04:24: [RATE] Limit exceeded for 196.97.0.94
+2026-04-08 20:58:58: [RATE] Limit exceeded for 102.0.24.154
+2026-04-08 20:58:58: [RATE] Limit exceeded for 102.0.24.154
+2026-04-08 20:58:58: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:25: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:26: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:26: [RATE] Limit exceeded for 102.0.24.154
+2026-04-09 13:05:26: [RATE] Limit exceeded for 102.0.24.154
+2026-04-10 06:17:49: [FRAPPE-API] Proxy error: fetch failed
+2026-04-10 11:19:19: [RATE] Limit exceeded for 41.76.168.156
+2026-04-10 11:19:19: [RATE] Limit exceeded for 41.76.168.156
+2026-04-10 11:19:19: [RATE] Limit exceeded for 41.76.168.156
