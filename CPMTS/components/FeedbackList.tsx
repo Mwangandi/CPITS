@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FrappeFeedback, fetchAllFeedback } from '../services/frappeAPI';
+import { FrappeFeedback, fetchAllFeedback, saveFeedbackReplyToFrappe, deleteFeedbackReplyFromFrappe } from '../services/frappeAPI';
 import { analyzeFeedback } from '../services/geminiService';
 import {
   MessageSquare, Search, BrainCircuit, Loader2,
   ArrowRight, Quote, CheckCircle2, AlertCircle,
   Building2, ChevronDown, ChevronUp, FolderOpen,
-  Reply, Send, CheckCheck, Clock,
+  Reply, Send, CheckCheck, Clock, Trash2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from './Layout';
@@ -24,16 +24,21 @@ export interface FeedbackReply {
   repliedBy: string;
 }
 
-export function loadFeedbackReplies(): Record<string, FeedbackReply> {
-  try { return JSON.parse(localStorage.getItem('tt_feedback_replies') || '{}'); }
-  catch { return {}; }
+// Build a replies map from fetched feedback items (Frappe-stored replies)
+export function buildRepliesFromFeedback(feedbacks: FrappeFeedback[]): Record<string, FeedbackReply> {
+  const map: Record<string, FeedbackReply> = {};
+  for (const f of feedbacks) {
+    if (f.staff_reply) {
+      map[f.name] = { reply: f.staff_reply, repliedAt: f.replied_at ?? '', repliedBy: f.replied_by ?? '' };
+    }
+  }
+  return map;
 }
 
-function saveFeedbackReply(feedbackName: string, data: FeedbackReply) {
-  const all = loadFeedbackReplies();
-  all[feedbackName] = data;
-  localStorage.setItem('tt_feedback_replies', JSON.stringify(all));
-}
+// Kept for backward compat — no longer reads localStorage
+export function loadFeedbackReplies(): Record<string, FeedbackReply> { return {}; }
+
+export function deleteFeedbackReply(_feedbackName: string) { /* no-op — use deleteFeedbackReplyFromFrappe */ }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -126,6 +131,11 @@ const FeedbackCard: React.FC<{ f: FrappeFeedback; reply?: FeedbackReply; dupeCou
         </div>
         <div>
           <p className="font-black text-slate-800">{f.full_name}</p>
+          {f.creation && (
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+              {new Date(f.creation).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+            </p>
+          )}
           {dupeCount && dupeCount > 1 && (
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{dupeCount} similar submissions</p>
           )}
@@ -136,6 +146,16 @@ const FeedbackCard: React.FC<{ f: FrappeFeedback; reply?: FeedbackReply; dupeCou
         <Quote className="absolute -top-2 -left-2 text-slate-100" size={36} />
         <p className="relative z-10 leading-relaxed">"{f.description}"</p>
       </div>
+
+      {f.attachment && (
+        <a href={f.attachment} target="_blank" rel="noopener noreferrer">
+          <img
+            src={f.attachment}
+            alt="Attached evidence"
+            className="w-full max-h-56 object-cover rounded-xl sm:rounded-2xl border border-slate-100 hover:opacity-90 transition-opacity cursor-pointer"
+          />
+        </a>
+      )}
 
       {reply && (
         <div className="p-3 sm:p-4 bg-green-50 rounded-xl sm:rounded-2xl border border-green-100">
@@ -246,11 +266,12 @@ interface AdminFeedbackCardProps {
   f: FrappeFeedback;
   replies: Record<string, FeedbackReply>;
   onReply: (feedbackName: string, replyText: string) => void;
+  onDeleteReply: (feedbackName: string) => void;
   replyingTo: string | null;
   setReplyingTo: (name: string | null) => void;
 }
 
-const AdminFeedbackCard: React.FC<AdminFeedbackCardProps> = ({ f, replies, onReply, replyingTo, setReplyingTo }) => {
+const AdminFeedbackCard: React.FC<AdminFeedbackCardProps> = ({ f, replies, onReply, onDeleteReply, replyingTo, setReplyingTo }) => {
   const [replyText, setReplyText] = useState('');
   const existingReply = replies[f.name];
   const isReplying = replyingTo === f.name;
@@ -283,7 +304,7 @@ const AdminFeedbackCard: React.FC<AdminFeedbackCardProps> = ({ f, replies, onRep
             <div>
               <p className="font-black text-slate-800 text-sm">{f.full_name}</p>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                {f.creation ? new Date(f.creation).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                {f.creation ? new Date(f.creation).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : ''}
               </p>
             </div>
           </div>
@@ -308,6 +329,17 @@ const AdminFeedbackCard: React.FC<AdminFeedbackCardProps> = ({ f, replies, onRep
           <Quote className="absolute -top-2 -left-2 text-slate-100" size={32} />
           <p className="relative z-10 leading-relaxed">"{f.description}"</p>
         </div>
+
+        {/* Attached image */}
+        {f.attachment && (
+          <a href={f.attachment} target="_blank" rel="noopener noreferrer">
+            <img
+              src={f.attachment}
+              alt="Attached evidence"
+              className="w-full max-h-52 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity cursor-pointer"
+            />
+          </a>
+        )}
 
         {/* Existing reply */}
         {existingReply && (
@@ -361,15 +393,27 @@ const AdminFeedbackCard: React.FC<AdminFeedbackCardProps> = ({ f, replies, onRep
             <Building2 size={12} /> View Project
           </Link>
           {!isReplying && (
-            <button
-              onClick={() => setReplyingTo(isReplying ? null : f.name)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${existingReply
-                ? 'text-slate-400 hover:text-tt-green hover:bg-slate-50'
-                : 'tt-bg-navy text-white shadow-md hover:scale-[1.02]'
-                }`}
-            >
-              <Reply size={12} /> {existingReply ? 'Edit Reply' : 'Reply'}
-            </button>
+            <div className="flex items-center gap-1.5">
+              {existingReply && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Delete this reply?')) onDeleteReply(f.name);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all"
+                >
+                  <Trash2 size={11} /> Delete
+                </button>
+              )}
+              <button
+                onClick={() => setReplyingTo(f.name)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${existingReply
+                  ? 'text-slate-400 hover:text-tt-green hover:bg-slate-50'
+                  : 'tt-bg-navy text-white shadow-md hover:scale-[1.02]'
+                  }`}
+              >
+                <Reply size={12} /> {existingReply ? 'Edit' : 'Reply'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -383,13 +427,14 @@ interface AdminGroupCardProps {
   group: ProjectGroup;
   replies: Record<string, FeedbackReply>;
   onReply: (feedbackName: string, replyText: string) => void;
+  onDeleteReply: (feedbackName: string) => void;
   replyingTo: string | null;
   setReplyingTo: (name: string | null) => void;
   searchTerm: string;
   defaultOpen: boolean;
 }
 
-const AdminGroupCard: React.FC<AdminGroupCardProps> = ({ group, replies, onReply, replyingTo, setReplyingTo, searchTerm, defaultOpen }) => {
+const AdminGroupCard: React.FC<AdminGroupCardProps> = ({ group, replies, onReply, onDeleteReply, replyingTo, setReplyingTo, searchTerm, defaultOpen }) => {
   const [open, setOpen] = useState(defaultOpen);
 
   const dedupedItems = useMemo(() => deduplicateItems(group.items, replies), [group.items, replies]);
@@ -449,6 +494,7 @@ const AdminGroupCard: React.FC<AdminGroupCardProps> = ({ group, replies, onReply
               f={f}
               replies={replies}
               onReply={onReply}
+              onDeleteReply={onDeleteReply}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
             />
@@ -466,8 +512,11 @@ const AdminFeedbackView: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<FrappeFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [replies, setReplies] = useState<Record<string, FeedbackReply>>(loadFeedbackReplies);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'replied'>('all');
+
+  // Derive replies from Frappe data (globally visible to all users)
+  const replies = useMemo(() => buildRepliesFromFeedback(feedbacks), [feedbacks]);
 
   useEffect(() => {
     const load = async () => {
@@ -482,27 +531,44 @@ const AdminFeedbackView: React.FC = () => {
   const allGroups = useMemo(() => groupAndSortAdmin(feedbacks, replies), [feedbacks, replies]);
 
   const visibleGroups = useMemo(() => {
-    if (!searchTerm) return allGroups;
+    let groups = allGroups;
+    // Apply status filter
+    if (filter === 'pending') {
+      groups = groups
+        .map(g => ({ ...g, items: g.items.filter(f => !replies[f.name]) }))
+        .filter(g => g.items.length > 0);
+    } else if (filter === 'replied') {
+      groups = groups
+        .map(g => ({ ...g, items: g.items.filter(f => !!replies[f.name]) }))
+        .filter(g => g.items.length > 0);
+    }
+    // Apply search
+    if (!searchTerm) return groups;
     const q = searchTerm.toLowerCase();
-    return allGroups.filter(g =>
+    return groups.filter(g =>
       g.projectName.toLowerCase().includes(q) ||
       g.items.some(f => f.description?.toLowerCase().includes(q) || f.full_name?.toLowerCase().includes(q))
     );
-  }, [allGroups, searchTerm]);
+  }, [allGroups, searchTerm, filter, replies]);
 
   // Deduplicate across all feedback for the summary counters
   const allDeduped = useMemo(() => deduplicateItems(feedbacks, replies), [feedbacks, replies]);
   const totalUnreplied = useMemo(() => allDeduped.filter(f => !replies[f.name]).length, [allDeduped, replies]);
 
-  const handleReply = (feedbackName: string, replyText: string) => {
+  const handleReply = async (feedbackName: string, replyText: string) => {
     const data: FeedbackReply = {
       reply: replyText,
-      repliedAt: new Date().toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      repliedAt: new Date().toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       repliedBy: user?.name ?? 'Staff',
     };
-    saveFeedbackReply(feedbackName, data);
-    setReplies(loadFeedbackReplies());
+    const saved = await saveFeedbackReplyToFrappe(feedbackName, data);
+    if (saved) setFeedbacks(await fetchAllFeedback());
     setReplyingTo(null);
+  };
+
+  const handleDeleteReply = async (feedbackName: string) => {
+    const cleared = await deleteFeedbackReplyFromFrappe(feedbackName);
+    if (cleared) setFeedbacks(await fetchAllFeedback());
   };
 
   return (
@@ -529,8 +595,8 @@ const AdminFeedbackView: React.FC = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+      {/* Search + Filter */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
@@ -540,6 +606,24 @@ const AdminFeedbackView: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        <div className="flex gap-2">
+          {(['all', 'pending', 'replied'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filter === f
+                ? f === 'pending'
+                  ? 'bg-amber-100 text-amber-700'
+                  : f === 'replied'
+                    ? 'bg-green-100 text-green-700'
+                    : 'tt-bg-navy text-white'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                }`}
+            >
+              {f === 'all' ? `All (${allDeduped.length})` : f === 'pending' ? `Pending (${totalUnreplied})` : `Replied (${allDeduped.length - totalUnreplied})`}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -557,6 +641,7 @@ const AdminFeedbackView: React.FC = () => {
               group={group}
               replies={replies}
               onReply={handleReply}
+              onDeleteReply={handleDeleteReply}
               replyingTo={replyingTo}
               setReplyingTo={setReplyingTo}
               searchTerm={searchTerm}
@@ -577,21 +662,17 @@ const AdminFeedbackView: React.FC = () => {
   );
 };
 
-// ─── main component ──────────────────────────────────────────────────────────
+// ─── Public feedback view ─────────────────────────────────────────────────────
 
-const FeedbackList: React.FC = () => {
-  const { user } = useAuth();
-
-  // Admin/staff users get the enhanced admin feedback view
-  if (user) return <AdminFeedbackView />;
-
-  // Public view below
+const PublicFeedbackView: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<FrappeFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [replies] = useState<Record<string, FeedbackReply>>(loadFeedbackReplies);
+
+  // Derive replies from Frappe data so they are globally visible
+  const replies = useMemo(() => buildRepliesFromFeedback(feedbacks), [feedbacks]);
 
   useEffect(() => {
     const load = async () => {
@@ -777,6 +858,14 @@ const FeedbackList: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// ─── main component ──────────────────────────────────────────────────────────
+
+const FeedbackList: React.FC = () => {
+  const { user } = useAuth();
+  if (user) return <AdminFeedbackView />;
+  return <PublicFeedbackView />;
 };
 
 export default FeedbackList;

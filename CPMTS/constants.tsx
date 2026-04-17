@@ -33,9 +33,9 @@ export const getDepartmentImage = (dept: string) => DEPARTMENT_IMAGES[dept] || F
 export const SUB_COUNTIES = ["Voi", "Wundanyi", "Mwatate", "Taveta"];
 
 export const SUB_COUNTY_WARDS: Record<string, string[]> = {
-  "Voi": ["Kaloleni", "Kasigau", "Mbololo", "Ngolia", "Sagala"],
-  "Wundanyi": ["Mwanda/Mgange", "Wumingu/Kishushe", "Wundanyi/Mbale"],
-  "Mwatate": ["Bura", "Chawia", "Mwatate", "Ronge", "Wusi/Kishamba"],
+  "Voi": ["Kaloleni", "Kasigau", "Marungu", "Mbololo", "Ngolia", "Sagala"],
+  "Wundanyi": ["Mwanda/Mgange", "Werugha", "Wumingu/Kishushe", "Wundanyi/Mbale"],
+  "Mwatate": ["Bura", "Chawia", "Headquarters", "Mwatate", "Ronge", "Wusi/Kishamba"],
   "Taveta": ["Bomeni", "Chala", "Mahoo", "Mata", "Mboghoni"],
 };
 

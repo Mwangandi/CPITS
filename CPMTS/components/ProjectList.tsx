@@ -403,6 +403,7 @@ const ProjectList: React.FC = () => {
                           </div>
                           <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-6 border-t border-slate-50">
                             <div className="flex items-center gap-2 sm:gap-3 text-slate-500 font-bold text-xs sm:text-sm"><MapPin size={14} /> <span className="truncate">{project.ward}, {project.subCounty}</span></div>
+                            {project.financialYear && <div className="flex items-center gap-2 sm:gap-3 text-slate-500 font-bold text-xs sm:text-sm"><History size={14} /> <span>{project.financialYear}</span></div>}
                             {project.contractor && project.contractor !== 'TBD' && project.contractor !== 'n/a' && (<div className="flex items-center gap-2 sm:gap-3 text-slate-500 font-bold text-xs sm:text-sm"><Building2 size={14} /> <span className="truncate">{project.contractor}</span></div>)}
                           </div>
                           <div className="pt-4 space-y-3">

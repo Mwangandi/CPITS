@@ -558,6 +558,58 @@ const ALLOWED_API_METHODS = new Set([
   "frappe.core.doctype.communication.email.make",
 ]);
 
+// ─────────────────────────────────────────────
+// Feedback File Upload — forwards multipart to Frappe upload_file
+// ─────────────────────────────────────────────
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+
+app.post("/upload-feedback-file", rateLimit, (req, res) => {
+  const contentType = req.headers["content-type"] || "";
+  if (!contentType.includes("multipart/form-data")) {
+    return res.status(400).json({ error: "multipart/form-data required" });
+  }
+
+  const chunks = [];
+  let received = 0;
+
+  req.on("data", (chunk) => {
+    received += chunk.length;
+    if (received > MAX_UPLOAD_BYTES) {
+      req.destroy();
+      return res.status(413).json({ error: "File too large (max 10 MB)" });
+    }
+    chunks.push(chunk);
+  });
+
+  req.on("end", async () => {
+    try {
+      const body = Buffer.concat(chunks);
+      const targetUrl = new URL("/api/method/upload_file", FRAPPE_BASE_URL);
+
+      const upstream = await fetch(targetUrl.toString(), {
+        method: "POST",
+        headers: {
+          Authorization: `token ${API_KEY}:${API_SECRET}`,
+          "Content-Type": contentType,
+        },
+        body,
+      });
+
+      const data = await upstream.json();
+      return res.status(upstream.status).json(data);
+    } catch (err) {
+      console.error("[UPLOAD] Error:", err.message);
+      return res.status(502).json({ error: "Upload failed" });
+    }
+  });
+
+  req.on("error", (err) => {
+    console.error("[UPLOAD] Stream error:", err.message);
+    if (!res.headersSent) res.status(500).json({ error: "Stream error" });
+  });
+});
+
 app.all("/frappe-api/*", rateLimit, async (req, res) => {
   try {
     const subPath = req.params[0]; // everything after /frappe-api/

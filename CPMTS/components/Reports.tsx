@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProjectsForReport, ReportProject, fetchAllFeedback, FrappeFeedback } from '../services/frappeAPI';
-import { loadFeedbackReplies, FeedbackReply } from './FeedbackList';
+import { loadFeedbackReplies, FeedbackReply, buildRepliesFromFeedback } from './FeedbackList';
 import { useAuth } from './Layout';
 import { DEPARTMENTS, SUB_COUNTIES, SUB_COUNTY_WARDS } from '../constants';
 import {
@@ -29,7 +29,6 @@ const AVAILABLE_FIELDS: FieldOption[] = [
     { key: 'status', label: 'Status', defaultSelected: true },
     { key: 'estimatedCost', label: 'Estimated Cost (KES)', defaultSelected: true },
     { key: 'amountPaid', label: 'Amount Paid (KES)', defaultSelected: true },
-    { key: 'progress', label: 'Completion Level (%)', defaultSelected: true },
     { key: 'contractor', label: 'Contractor', defaultSelected: false },
     { key: 'implementedBy', label: 'Implemented By', defaultSelected: false },
     { key: 'partner', label: 'Partner', defaultSelected: false },
@@ -287,7 +286,10 @@ const Reports: React.FC = () => {
         staleTime: 1000 * 60 * 5,
     });
 
-    const fbReplies = useMemo<Record<string, FeedbackReply>>(loadFeedbackReplies, []);
+    const fbReplies = useMemo<Record<string, FeedbackReply>>(
+        () => buildRepliesFromFeedback(allFeedback ?? []),
+        [allFeedback]
+    );
 
     const filteredFeedback = useMemo(() => {
         if (!allFeedback) return [];
@@ -425,25 +427,23 @@ const Reports: React.FC = () => {
                 </div>
             </div>
 
-            {/* Tabs — Feedback tab only shown to logged-in staff */}
-            {isStaff && (
-                <div className="flex gap-1 p-1 bg-slate-100 rounded-2xl w-fit">
-                    <button
-                        onClick={() => setActiveTab('projects')}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${activeTab === 'projects' ? 'bg-white text-slate-800 shadow' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <BarChart3 size={16} />
-                        Projects Report
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('feedback')}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${activeTab === 'feedback' ? 'bg-white text-slate-800 shadow' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <MessageSquare size={16} />
-                        Feedback Report
-                    </button>
-                </div>
-            )}
+            {/* Tabs */}
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-2xl w-fit">
+                <button
+                    onClick={() => setActiveTab('projects')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${activeTab === 'projects' ? 'bg-white text-slate-800 shadow' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    <BarChart3 size={16} />
+                    Projects Report
+                </button>
+                <button
+                    onClick={() => setActiveTab('feedback')}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all ${activeTab === 'feedback' ? 'bg-white text-slate-800 shadow' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    <MessageSquare size={16} />
+                    Feedback Report
+                </button>
+            </div>
 
             {/* ── PROJECTS REPORT ────────────────────────────────────────────── */}
             {activeTab === 'projects' && (
@@ -644,7 +644,7 @@ const Reports: React.FC = () => {
             )} {/* end projects tab */}
 
             {/* ── FEEDBACK REPORT — staff only ────────────────────────────── */}
-            {activeTab === 'feedback' && isStaff && (
+            {activeTab === 'feedback' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                     {/* Left: Filters */}

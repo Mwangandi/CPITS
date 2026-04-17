@@ -108,6 +108,7 @@ interface FrappeProject {
   approval_number?: string;
   technical_rating?: string;
   image?: string;
+  source_of_funds?: Array<{ funded_by?: string; partner?: string; percentage_of_funding?: number }>
 }
 
 export interface FrappeFilters {
@@ -129,6 +130,10 @@ export interface FrappeFeedback {
   rating?: number;
   description: string;
   creation?: string;
+  attachment?: string;
+  staff_reply?: string;
+  replied_at?: string;
+  replied_by?: string;
 }
 
 interface FrappePMCMember {
@@ -329,6 +334,10 @@ const transformFrappeProject = (fp: FrappeProject): Project => {
   const imageUrl = getFrappeImageUrl(fp.image);
   const ward = fp.admin_names || "";
 
+  const sourceOfFunds = fp.source_of_funds
+    ?.map(r => r.funded_by)
+    .filter((s): s is string => !!s) ?? [];
+
   return {
     id: fp.name,
     title: fp.project_name,
@@ -342,10 +351,12 @@ const transformFrappeProject = (fp: FrappeProject): Project => {
     expenditure: 0,
     status: mapFrappeStatus(fp.status),
     contractor: fp.contractor_name || "TBD",
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: new Date(Date.now() + 31536000000).toISOString().split("T")[0],
+    startDate: fp.expected_start_date || "",
+    endDate: fp.expected_end_date || "",
     pmcMembers: [],
     images: imageUrl ? [imageUrl] : [],
+    projectNumber: fp.project_number,
+    sourceOfFunds: sourceOfFunds.length > 0 ? sourceOfFunds : undefined,
   };
 };
 
@@ -362,8 +373,13 @@ const FEEDBACK_FIELDS = [
   "project_name",
   "full_name",
   "description",
+  "category",
   "rating",
   "creation",
+  "attachment",
+  "staff_reply",
+  "replied_at",
+  "replied_by",
 ];
 
 const PMC_FIELDS = [
@@ -379,6 +395,7 @@ const PMC_FIELDS = [
 const FIELDS = [
   "name",
   "project_name",
+  "project_number",
   "status",
   "financial_year",
   "department",
@@ -386,6 +403,8 @@ const FIELDS = [
   "project_scope",
   "admin_names",
   "amount_paid",
+  "expected_start_date",
+  "expected_end_date",
 ];
 
 // Extended fields for report exports
@@ -1182,7 +1201,7 @@ export const submitFeedbackToFrappe = async (payload: {
   category: string;
   rating: number;
   description: string;
-}): Promise<boolean> => {
+}): Promise<string | null> => {
   try {
     const response = await fetch(
       `${API_BASE}/resource/ProjectX Feedback`,
@@ -1197,7 +1216,7 @@ export const submitFeedbackToFrappe = async (payload: {
 
     if (!response.ok) {
       const errorText = await response.text();
-      return false;
+      return null;
     }
 
     const result = await response.json();
@@ -1205,9 +1224,38 @@ export const submitFeedbackToFrappe = async (payload: {
     // Invalidate feedback caches after successful submission
     invalidateCache(payload.project);
 
-    return true;
+    return result.data?.name ?? null;
   } catch (error) {
-    return false;
+    return null;
+  }
+};
+
+/**
+ * Upload an image file and attach it to a ProjectX Feedback document.
+ * Returns the Frappe file URL on success, or null on failure.
+ */
+export const uploadFeedbackFile = async (
+  docname: string,
+  file: File,
+): Promise<string | null> => {
+  try {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    form.append("doctype", "ProjectX Feedback");
+    form.append("docname", docname);
+    form.append("fieldname", "attachment");
+    form.append("is_private", "0");
+
+    const res = await fetch("/proxy/upload-feedback-file", {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) return null;
+    const result = await res.json();
+    return result.message?.file_url ?? null;
+  } catch {
+    return null;
   }
 };
 
@@ -1311,6 +1359,55 @@ export const fetchFrappeUsers = async (): Promise<FrappeUser[]> => {
   return all;
 };
 
+/**
+ * Save a staff reply to a ProjectX Feedback document in Frappe.
+ */
+export const saveFeedbackReplyToFrappe = async (
+  feedbackName: string,
+  data: { reply: string; repliedAt: string; repliedBy: string }
+): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `${API_BASE}/resource/ProjectX Feedback/${encodeURIComponent(feedbackName)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          staff_reply: data.reply,
+          replied_at: data.repliedAt,
+          replied_by: data.repliedBy,
+        }),
+      }
+    );
+    if (!response.ok) return false;
+    invalidateCache();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Clear the staff reply fields on a ProjectX Feedback document.
+ */
+export const deleteFeedbackReplyFromFrappe = async (feedbackName: string): Promise<boolean> => {
+  try {
+    const response = await fetch(
+      `${API_BASE}/resource/ProjectX Feedback/${encodeURIComponent(feedbackName)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staff_reply: "", replied_at: "", replied_by: "" }),
+      }
+    );
+    if (!response.ok) return false;
+    invalidateCache();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export default {
   fetchFrappeProjects,
   fetchFrappeProjectById,
@@ -1325,5 +1422,6 @@ export default {
   fetchAllFeedback,
   fetchFeedbackByProject,
   submitFeedbackToFrappe,
+  uploadFeedbackFile,
   fetchFrappeUsers,
 };

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Project, ProjectStatus, Feedback, PMCMember, ProjectDocument } from '../types';
 import { getProjectSummary } from '../services/geminiService';
 import { getDepartmentImage, FALLBACK_IMAGE } from '../constants';
-import { MapPin, Calendar, Building2, Users, FileText, ArrowLeft, Send, Star, Share2, Edit3, Trash2, ShieldCheck, Mail, MessageCircle, Image as ImageIcon, Reply } from 'lucide-react';
+import { MapPin, Calendar, Building2, Users, FileText, ArrowLeft, Send, Star, Share2, Edit3, ShieldCheck, Mail, MessageCircle, Image as ImageIcon, Reply, CheckCheck, Trash2, Paperclip, X } from 'lucide-react';
 import { useAuth } from './Layout';
-import { fetchFrappeProjectById, submitFeedbackToFrappe, fetchFeedbackByProject, fetchProjectXPMC, fetchProjectXGallery, fetchProjectXDocuments, fetchAuthenticatedImageUrl, invalidateCache } from '../services/frappeAPI';
+import { fetchFrappeProjectById, submitFeedbackToFrappe, uploadFeedbackFile, fetchFeedbackByProject, fetchProjectXPMC, fetchProjectXGallery, fetchProjectXDocuments, fetchAuthenticatedImageUrl, saveFeedbackReplyToFrappe, deleteFeedbackReplyFromFrappe } from '../services/frappeAPI';
 import { FrappeFeedback } from '../services/frappeAPI';
-import { loadFeedbackReplies, FeedbackReply } from './FeedbackList';
+import { FeedbackReply } from './FeedbackList';
 
 const ProjectDetail: React.FC = () => {
   // useParams()["*"] captures the full wildcard segment including slashes,
@@ -23,13 +23,15 @@ const ProjectDetail: React.FC = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   // ↓ field names now match the ProjectX Feedback doctype exactly
   const [feedback, setFeedback] = useState({ fullName: '', phone_number: '', email: '', category: '', rating: 0, description: '' });
+  const [attachFile, setAttachFile] = useState<File | null>(null);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitError, setSubmitError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeImage, setActiveImage] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [replies, setReplies] = useState<Record<string, FeedbackReply>>(loadFeedbackReplies);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   // Fetch feedback using React Query
   const { data: projectFeedback = [], isLoading: loadingFeedback } = useQuery({
@@ -38,6 +40,17 @@ const ProjectDetail: React.FC = () => {
     enabled: !!id,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Derive replies from Frappe data so they are globally visible
+  const replies = useMemo(() => {
+    const map: Record<string, FeedbackReply> = {};
+    for (const f of projectFeedback) {
+      if (f.staff_reply) {
+        map[f.name] = { reply: f.staff_reply, repliedAt: f.replied_at ?? '', repliedBy: f.replied_by ?? '' };
+      }
+    }
+    return map;
+  }, [projectFeedback]);
 
   // Fetch PMC members using React Query
   const { data: pmcMembers = [], isLoading: loadingPMC, refetch: refetchPMC } = useQuery({
@@ -159,6 +172,16 @@ const ProjectDetail: React.FC = () => {
     }
   }, [project?.id, resolvedGalleryUrls]);
 
+  // Handle reply text pre-filling and clearing — must be before early returns
+  useEffect(() => {
+    if (!replyingTo) {
+      setReplyText('');
+    } else {
+      const existingReply = replies[replyingTo];
+      setReplyText(existingReply ? existingReply.reply : '');
+    }
+  }, [replyingTo, replies]);
+
   if (loading) return (
     <div className="text-center py-20 animate-fade-in">
       <div className="w-6 h-6 bg-tt-green rounded-full animate-ping mx-auto mb-4"></div>
@@ -184,7 +207,7 @@ const ProjectDetail: React.FC = () => {
     setSubmitted(false);
     setIsSubmitting(true);
 
-    const success = await submitFeedbackToFrappe({
+    const docName = await submitFeedbackToFrappe({
       subject: `Feedback on ${project!.title}`,
       project: project!.id,
       project_name: project!.title,
@@ -196,35 +219,42 @@ const ProjectDetail: React.FC = () => {
       description: feedback.description,
     });
 
-    setIsSubmitting(false);
-
-    if (success) {
+    if (docName) {
+      if (attachFile) {
+        await uploadFeedbackFile(docName, attachFile);
+      }
       queryClient.refetchQueries({ queryKey: ['feedback', id] });
       setFeedback({ fullName: '', phone_number: '', email: '', category: '', rating: 0, description: '' });
+      setAttachFile(null);
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
     } else {
       setSubmitError('Submission failed. Please try again.');
     }
+
+    setIsSubmitting(false);
   };
 
-  const handleDelete = async () => {
-    if (window.confirm(`Are you absolutely sure you want to delete "${project.title}"?`)) {
-      try {
-        const response = await fetch(
-          `/proxy/frappe-api/resource/Project%20Investments/${project.id}`,
-          {
-            method: 'DELETE',
-          }
-        );
-        if (response.ok) {
-          navigate('/projects');
-        } else {
-          alert('Failed to delete project.');
-        }
-      } catch (err) {
-      }
-    }
+  const handleSubmitReply = async (feedbackName: string) => {
+    if (!replyText.trim()) return;
+    if (!user) return;
+
+    const replyData: FeedbackReply = {
+      reply: replyText.trim(),
+      repliedAt: new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }),
+      repliedBy: user.name || user.email,
+    };
+
+    const saved = await saveFeedbackReplyToFrappe(feedbackName, replyData);
+    if (saved) queryClient.refetchQueries({ queryKey: ['feedback', id] });
+    setReplyingTo(null);
+    setReplyText('');
+  };
+
+  const handleDeleteReply = async (feedbackName: string) => {
+    if (!window.confirm('Delete this reply?')) return;
+    const cleared = await deleteFeedbackReplyFromFrappe(feedbackName);
+    if (cleared) queryClient.refetchQueries({ queryKey: ['feedback', id] });
   };
 
   const getStatusStyles = (status: ProjectStatus) => {
@@ -248,14 +278,11 @@ const ProjectDetail: React.FC = () => {
           {hasPermission('edit_project') && (
             <button onClick={() => navigate(`/projects/${id}/edit`)} className="flex items-center gap-2 tt-bg-navy text-white px-6 py-3 rounded-2xl font-black hover:scale-[1.02] shadow-xl shadow-blue-100 transition-all active:scale-95"><Edit3 size={18} /> Modify Profile</button>
           )}
-          {hasPermission('delete_project') && (
-            <button onClick={handleDelete} className="flex items-center gap-2 bg-rose-500 text-white px-6 py-3 rounded-2xl font-black hover:bg-rose-600 shadow-xl shadow-rose-100 transition-all active:scale-95"><Trash2 size={18} /> Delete Project</button>
-          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
-        <div className="lg:col-span-2 space-y-6 sm:space-y-8 md:space-y-10">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 md:gap-10">
+        <div className="lg:col-span-3 space-y-6 sm:space-y-8 md:space-y-10">
           {/* Gallery Section */}
           <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
             <div className="relative h-[200px] sm:h-[300px] md:h-[400px] w-full rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group">
@@ -300,10 +327,24 @@ const ProjectDetail: React.FC = () => {
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 mb-4 sm:mb-6 md:mb-8 leading-tight tracking-tight">{project.title}</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8 md:mb-10">
-              <DetailItem icon={<MapPin size={20} />} label="Location Details" value={project.ward} />
-              {/* <DetailItem icon={<Calendar size={20} />} label="Operational Period" value={`${project.startDate} to ${project.endDate}`} /> */}
+              {project.projectNumber && (
+                <DetailItem icon={<FileText size={20} />} label="Project Number" value={project.projectNumber} />
+              )}
+              <DetailItem icon={<MapPin size={20} />} label="Ward" value={project.ward || '—'} />
+              <DetailItem icon={<Building2 size={20} />} label="Department" value={project.department || '—'} />
+              <DetailItem icon={<Calendar size={20} />} label="Financial Year" value={project.financialYear || '—'} />
               <DetailItem icon={<Building2 size={20} />} label="Contracting Firm" value={project.contractor} />
-              <DetailItem icon={<FileText size={20} />} label="Financial Cycle" value={project.financialYear} />
+              {project.startDate && (
+                <DetailItem icon={<Calendar size={20} />} label="Start Date" value={new Date(project.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+              )}
+              {project.endDate && (
+                <DetailItem icon={<Calendar size={20} />} label="End Date" value={new Date(project.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+              )}
+              {project.sourceOfFunds && project.sourceOfFunds.length > 0 && (
+                <div className="sm:col-span-2">
+                  <DetailItem icon={<FileText size={20} />} label="Source of Funds" value={project.sourceOfFunds.join(' · ')} />
+                </div>
+              )}
             </div>
             <div className="space-y-4">
               <h3 className="text-xl font-black text-slate-800 uppercase tracking-widest text-xs">Project Narrative</h3>
@@ -397,45 +438,121 @@ const ProjectDetail: React.FC = () => {
                 <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No feedback yet</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {projectFeedback.map((item) => {
                   const reply = replies[item.name];
+                  const isReplying = replyingTo === item.name;
                   return (
-                    <div key={item.name} className="p-4 sm:p-6 rounded-xl sm:rounded-[2rem] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-lg transition-all">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="font-black text-slate-800 text-lg">{item.subject}</h4>
-                          <p className="text-[12px] text-slate-400 font-black uppercase tracking-widest mt-1">by {item.full_name}</p>
+                    <div key={item.name} className={`rounded-xl border overflow-hidden transition-all ${reply ? 'bg-white border-slate-100' : 'bg-amber-50/40 border-amber-100'}`}>
+                      <div className="p-4 sm:p-5 space-y-3">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl tt-bg-navy text-white flex items-center justify-center font-black text-base flex-shrink-0">
+                              {item.full_name?.charAt(0).toUpperCase() ?? '?'}
+                            </div>
+                            <div>
+                              <p className="font-black text-slate-800 text-sm">{item.full_name}</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                {item.creation ? new Date(item.creation).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {item.category && (
+                              <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{item.category}</span>
+                            )}
+                            {reply ? (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-green-100 text-green-700">
+                                <CheckCheck size={10} /> Replied
+                              </span>
+                            ) : user ? (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700">
+                                Pending
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
-                        {item.category && (
-                          <span className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">{item.category}</span>
+
+                        {/* Feedback text */}
+                        <div className="relative p-3 sm:p-4 bg-slate-50 rounded-xl italic text-slate-600 font-medium border-l-4 border-tt-green text-sm">
+                          <p className="leading-relaxed">"{item.description}"</p>
+                        </div>
+
+                        {/* Attached image */}
+                        {item.attachment && (
+                          <a href={item.attachment} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={item.attachment}
+                              alt="Attached evidence"
+                              className="w-full max-h-56 object-cover rounded-xl border border-slate-100 hover:opacity-90 transition-opacity cursor-pointer"
+                            />
+                          </a>
                         )}
-                      </div>
-                      <p className="text-slate-600 text-sm leading-relaxed mb-4 font-medium">{item.description}</p>
-                      <div className="flex flex-wrap gap-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                        {item.email && (
-                          <div className="flex items-center gap-2">
-                            <Mail size={14} className="text-slate-300" />
-                            {item.email}
+
+                        {/* Existing reply */}
+                        {reply && (
+                          <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                            <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                              <Reply size={11} /> Official Response
+                            </p>
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">{reply.reply}</p>
+                            <p className="text-[10px] text-slate-400 font-medium mt-1.5">{reply.repliedAt} · {reply.repliedBy}</p>
                           </div>
                         )}
-                        {item.phone_number && (
-                          <div className="flex items-center gap-2">
-                            <MessageCircle size={14} className="text-slate-300" />
-                            {item.phone_number}
+
+                        {/* Inline reply form */}
+                        {isReplying && (
+                          <div className="space-y-2">
+                            <textarea
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Type your official response..."
+                              rows={3}
+                              className="w-full px-4 py-3 rounded-xl border-2 border-tt-green bg-white text-sm font-medium text-slate-700 outline-none resize-none focus:shadow-sm transition-all"
+                              autoFocus
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                                className="px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleSubmitReply(item.name)}
+                                disabled={!replyText.trim()}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl tt-bg-green text-white text-[11px] font-black uppercase tracking-widest shadow-md shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40"
+                              >
+                                <Send size={13} /> Send Reply
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action bar */}
+                        {user && !isReplying && (
+                          <div className="flex justify-end gap-1.5 pt-1">
+                            {reply && (
+                              <button
+                                onClick={() => handleDeleteReply(item.name)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all"
+                              >
+                                <Trash2 size={11} /> Delete
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setReplyingTo(item.name)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${reply
+                                ? 'text-slate-400 hover:text-tt-green hover:bg-slate-50'
+                                : 'tt-bg-navy text-white shadow-md hover:scale-[1.02]'
+                                }`}
+                            >
+                              <Reply size={12} /> {reply ? 'Edit' : 'Reply'}
+                            </button>
                           </div>
                         )}
                       </div>
-                      {/* Staff reply */}
-                      {reply && (
-                        <div className="mt-4 p-3 sm:p-4 bg-green-50 rounded-xl border border-green-100">
-                          <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                            <Reply size={11} /> Official Staff Response
-                          </p>
-                          <p className="text-sm text-slate-700 font-medium leading-relaxed">{reply.reply}</p>
-                          <p className="text-[10px] text-slate-400 font-medium mt-1.5">{reply.repliedAt} · {reply.repliedBy}</p>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -444,15 +561,10 @@ const ProjectDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="space-y-6 sm:space-y-8">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
           <div className="bg-white p-4 sm:p-6 md:p-10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 lg:sticky lg:top-32">
             <div className="space-y-6 sm:space-y-8 md:space-y-10">
-              <div>
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Implementation Index</p>
-                <div className="flex justify-between items-end mb-3"><span className="text-3xl sm:text-4xl md:text-5xl font-black tt-green tracking-tighter">{project.progress}%</span><span className="text-[10px] font-black text-slate-300 uppercase pb-1 tracking-widest">Target 100%</span></div>
-                <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner"><div className="tt-bg-green h-full shadow-lg shadow-green-200 transition-all duration-1000" style={{ width: `${project.progress}%` }}></div></div>
-              </div>
-              <div className="pt-4 sm:pt-6 md:pt-8 border-t border-slate-100 grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project Budget</p><p className="font-black text-slate-800 text-xl tracking-tight">KES {(project.budget / 1000000).toFixed(1)}M</p></div>
                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Certified Exp.</p><p className="font-black tt-navy text-xl tracking-tight">KES {(project.expenditure / 1000000).toFixed(1)}M</p></div>
               </div>
@@ -530,6 +642,36 @@ const ProjectDetail: React.FC = () => {
                     value={feedback.description}
                     onChange={e => setFeedback({ ...feedback, description: e.target.value })}
                   />
+
+                  {/* Image attachment */}
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 flex items-center gap-1.5">
+                      <Paperclip size={11} /> Attach Image (optional)
+                    </label>
+                    {attachFile ? (
+                      <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-green-50 border-2 border-green-200 text-sm">
+                        <span className="font-bold text-slate-700 truncate max-w-[200px]">{attachFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setAttachFile(null)}
+                          className="ml-2 text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 hover:border-tt-green cursor-pointer transition-all">
+                        <ImageIcon size={18} className="text-slate-400" />
+                        <span className="text-sm font-bold text-slate-400">Choose photo…</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => setAttachFile(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
+                    )}
+                  </div>
 
                   {submitError && (
                     <p className="text-xs font-bold text-rose-500">{submitError}</p>

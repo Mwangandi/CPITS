@@ -13,14 +13,14 @@ export enum UserRole {
   SUPER_ADMIN = 'Super Admin'
 }
 
-export type Permission = 
-  | 'view_dashboard' 
-  | 'view_projects' 
-  | 'add_project' 
-  | 'edit_project' 
+export type Permission =
+  | 'view_dashboard'
+  | 'view_projects'
+  | 'add_project'
+  | 'edit_project'
   | 'delete_project'
-  | 'import_projects' 
-  | 'manage_users' 
+  | 'import_projects'
+  | 'manage_users'
   | 'manage_feedback'
   | 'manage_settings';
 
@@ -84,6 +84,8 @@ export interface Project {
   images: string[];
   latitude?: number;
   longitude?: number;
+  projectNumber?: string;
+  sourceOfFunds?: string[];
 }
 
 export interface DashboardStats {
