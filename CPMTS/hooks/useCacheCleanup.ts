@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const CACHE_CLEAR_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const CACHE_CLEAR_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 export const useCacheCleanup = (onCleared?: () => void) => {
   useEffect(() => {
