@@ -6,6 +6,9 @@ import { LayoutDashboard, FolderKanban, MessageSquare, Info, Lock, Settings, Use
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Permission, UserRole, SystemSettings } from '../types';
 import { fetchAllFeedback } from '../services/frappeAPI';
+import { useCacheCleanup } from '../hooks/useCacheCleanup';
+import { toastService } from '../services/toastService';
+import ToastContainer from './ToastContainer';
 
 const FRAPPE_API = ''; // proxied via Apache
 
@@ -68,6 +71,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const interval = setInterval(loadNotifs, 120_000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Clear cache every 5 minutes with toast notification
+  useCacheCleanup(() => {
+    toastService.info('Cache cleared', 3000);
+  });
 
   const login = async (identifier: string, password: string): Promise<boolean> => {
     try {
@@ -300,6 +308,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ─── PUBLIC LAYOUT — top nav + footer ────────────────────────────────────
   return (
     <AuthContext.Provider value={{ user, login, logout, hasPermission, settings, updateSettings, notifCount, clearNotifications }}>
+      <ToastContainer />
       <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
         <header className="bg-white border-b-4 border-tt-green sticky top-0 z-50 shadow-xl">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 h-16 sm:h-20 md:h-28 flex items-center justify-between">
