@@ -55,6 +55,11 @@ export interface ProjectDocument {
   attachUrl: string;
 }
 
+export interface ProjectFinancialInfo {
+  financialYear: string;
+  amountPaid: number;
+}
+
 export interface Feedback {
   id: string;
   projectId: string;
@@ -82,6 +87,7 @@ export interface Project {
   endDate: string;
   pmcMembers: PMCMember[];
   images: string[];
+  financialPayments?: ProjectFinancialInfo[];
   latitude?: number;
   longitude?: number;
   projectNumber?: string;

@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         allowedHosts: ['localhost', 'cpits.taitataveta.go.ke', '203.161.56.134'],
         proxy: {
+          '/proxy': {
+            target: 'http://127.0.0.1:3001',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/proxy/, ''),
+          },
           '/api': {
             target: 'http://127.0.0.1:8000',
             changeOrigin: true,

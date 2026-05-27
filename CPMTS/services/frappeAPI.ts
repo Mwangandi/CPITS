@@ -1,4 +1,4 @@
-import { Project, ProjectStatus, PMCMember } from "../types";
+import { Project, ProjectStatus, PMCMember, ProjectFinancialInfo } from "../types";
 import { SUB_COUNTY_WARDS } from "../constants";
 
 // All Frappe API calls are routed through the server-side proxy to keep credentials secure.
@@ -95,9 +95,9 @@ interface FrappeProject {
   financial_year: string;
   department: string;
   contractor_name: string;
-  project_scope: string;
-  admin_names: string;
-  amount_paid: number;
+  project_scope?: string;
+  admin_names?: string;
+  amount_paid?: number;
   estimated_cost?: number;
   completion_level?: number;
   expected_start_date?: string;
@@ -108,7 +108,9 @@ interface FrappeProject {
   approval_number?: string;
   technical_rating?: string;
   image?: string;
-  source_of_funds?: Array<{ funded_by?: string; partner?: string; percentage_of_funding?: number }>
+  source_of_funds?: Array<{ funded_by?: string; partner?: string; percentage_of_funding?: number }>;
+  project_financial_information?: Array<{ financial_year?: string; amount_paid?: number }>;
+  project_financial_informaion?: Array<{ financial_year?: string; amount_paid?: number }>;
 }
 
 export interface FrappeFilters {
@@ -162,6 +164,14 @@ interface FrappeGallery {
   project: string;
   project_name?: string;
   items?: FrappeGalleryItem[];
+}
+
+interface FrappeFinancialInfo {
+  name: string;
+  project: string;
+  project_name?: string;
+  financial_year?: string;
+  amount_paid?: number;
 }
 
 // ─────────────────────────────────────────────
@@ -338,6 +348,14 @@ const transformFrappeProject = (fp: FrappeProject): Project => {
     ?.map(r => r.funded_by)
     .filter((s): s is string => !!s) ?? [];
 
+  const childTableRows = fp.project_financial_information ?? fp.project_financial_informaion;
+  const financialPayments = childTableRows
+    ?.map(row => ({
+      financialYear: row.financial_year || "Unknown",
+      amountPaid: row.amount_paid || 0,
+    }))
+    .filter((row): row is ProjectFinancialInfo => !!row.financialYear) ?? [];
+
   return {
     id: fp.name,
     title: fp.project_name,
@@ -357,6 +375,7 @@ const transformFrappeProject = (fp: FrappeProject): Project => {
     images: imageUrl ? [imageUrl] : [],
     projectNumber: fp.project_number,
     sourceOfFunds: sourceOfFunds.length > 0 ? sourceOfFunds : undefined,
+    financialPayments: financialPayments.length > 0 ? financialPayments : undefined,
   };
 };
 
@@ -405,6 +424,19 @@ const FIELDS = [
   "amount_paid",
   "expected_start_date",
   "expected_end_date",
+];
+
+const DETAIL_FIELDS = [
+  ...FIELDS,
+  "completion_level",
+  "image",
+  "source_of_funds",
+  "project_financial_information",
+  "project_financial_informaion",
+  "project_financial_information.financial_year",
+  "project_financial_information.amount_paid",
+  "project_financial_informaion.financial_year",
+  "project_financial_informaion.amount_paid",
 ];
 
 // Extended fields for report exports
@@ -808,8 +840,12 @@ export const fetchFrappeProjectById = async (id: string): Promise<Project | null
 
     // Deduplicate concurrent requests for the same project
     return await dedupe(cacheKey, async () => {
+      const params = new URLSearchParams({
+        fields: JSON.stringify(DETAIL_FIELDS),
+      });
+
       const response = await fetch(
-        `${API_BASE}/resource/ProjectX/${id}`,
+        `${API_BASE}/resource/ProjectX/${id}?${params}`,
         { method: "GET" }
       );
 
@@ -1041,6 +1077,61 @@ export const fetchProjectIdsWithGallery = async (): Promise<Set<string>> => {
       return new Set<string>();
     }
   });
+};
+
+export const fetchProjectXFinancialInfo = async (projectId: string): Promise<ProjectFinancialInfo[]> => {
+  try {
+    const cacheKey = `financial-info:${projectId}`;
+    const cached = getCached<ProjectFinancialInfo[]>(cacheKey);
+    if (cached) return cached;
+
+    return await dedupe(cacheKey, async () => {
+      const params = new URLSearchParams({
+        fields: JSON.stringify(["financial_year", "amount_paid"]),
+        filters: JSON.stringify([["project", "=", projectId]]),
+        order_by: "financial_year asc",
+      });
+
+      const doctypes = [
+        "ProjectX Financial Information",
+        "Project Financial Information",
+        "project_financial_informaion",
+        "project_financial_information",
+      ];
+
+      let rows: FrappeFinancialInfo[] = [];
+      for (const doctype of doctypes) {
+        try {
+          const response = await fetch(
+            `${API_BASE}/resource/${encodeURIComponent(doctype)}?${params}`,
+            { method: "GET" }
+          );
+          if (!response.ok) {
+            continue;
+          }
+          const result = await response.json();
+          rows = result.data || [];
+          break;
+        } catch {
+          continue;
+        }
+      }
+
+      if (rows.length === 0) {
+        setCache(cacheKey, []);
+        return [];
+      }
+
+      const items = rows.map((row) => ({
+        financialYear: row.financial_year || "Unknown",
+        amountPaid: row.amount_paid || 0,
+      }));
+      setCache(cacheKey, items);
+      return items;
+    });
+  } catch {
+    return [];
+  }
 };
 
 /**
@@ -1415,6 +1506,7 @@ export default {
   fetchFrappeProjectsByStatus,
   fetchProjectXPMC,
   fetchProjectXGallery,
+  fetchProjectXFinancialInfo,
   fetchFirstGalleryImage,
   fetchProjectIdsWithGallery,
   getProxyImageUrl,

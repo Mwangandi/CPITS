@@ -268,7 +268,7 @@ const ProjectDetail: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 md:space-y-10 animate-fade-in pb-20">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 md:space-y-10 animate-fade-in pb-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <button onClick={() => navigate('/projects')} className="flex items-center gap-3 text-slate-400 hover:text-green-600 font-black text-xs uppercase tracking-widest transition-all group">
           <div className="p-2 bg-white border border-slate-100 rounded-xl group-hover:tt-bg-green group-hover:text-white transition-all shadow-sm"><ArrowLeft size={18} /></div>
@@ -281,8 +281,8 @@ const ProjectDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 md:gap-10">
-        <div className="lg:col-span-3 space-y-6 sm:space-y-8 md:space-y-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8 md:space-y-10">
           {/* Gallery Section */}
           <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
             <div className="relative h-[200px] sm:h-[300px] md:h-[400px] w-full rounded-2xl sm:rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group">
@@ -561,12 +561,31 @@ const ProjectDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <div className="bg-white p-4 sm:p-6 md:p-10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 lg:sticky lg:top-32">
             <div className="space-y-6 sm:space-y-8 md:space-y-10">
               <div className="grid grid-cols-2 gap-4 sm:gap-6">
                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Project Budget</p><p className="font-black text-slate-800 text-xl tracking-tight">KES {(project.budget / 1000000).toFixed(1)}M</p></div>
                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Certified Exp.</p><p className="font-black tt-navy text-xl tracking-tight">KES {(project.expenditure / 1000000).toFixed(1)}M</p></div>
+              </div>
+              <div className="pt-4 sm:pt-6 md:pt-8 border-t border-slate-100">
+                <h4 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Paid by Financial Year</h4>
+                {project.financialPayments ? (
+                  <div className="space-y-3">
+                    {project.financialPayments.map((item) => (
+                      <div key={item.financialYear} className="grid grid-cols-[1fr_auto] gap-4 items-center rounded-2xl bg-slate-50 px-4 py-3 border border-slate-100">
+                        <span className="font-black text-slate-700">{item.financialYear}</span>
+                        <span className="font-black text-tt-navy">KES {item.amountPaid.toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div className="grid grid-cols-[1fr_auto] gap-4 items-center rounded-2xl bg-tt-green/10 px-4 py-3 border border-tt-green/20">
+                      <span className="font-black text-slate-700">Total Paid</span>
+                      <span className="font-black text-tt-green">KES {project.financialPayments.reduce((sum, item) => sum + item.amountPaid, 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">No financial payment records are available for this project.</p>
+                )}
               </div>
               <div className="pt-4 sm:pt-6 md:pt-8 border-t border-slate-100">
                 <h4 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><MessageCircle className="tt-green" size={20} /> Public Feedback</h4>

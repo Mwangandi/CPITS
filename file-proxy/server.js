@@ -773,10 +773,10 @@ app.listen(Number(PORT), () => {
 ╔══════════════════════════════════════════════════╗
 ║       Frappe Image Optimization Proxy            ║
 ╠══════════════════════════════════════════════════╣
-║  Port:        ${String(PORT).padEnd(34)}║
+║  Port:        ${String(PORT).padEnd(34)}                ║
 ║  Backend:     ${FRAPPE_BASE_URL.slice(0, 34).padEnd(34)}║
-║  Cache TTL:   ${String(CACHE_TTL + "s").padEnd(34)}║
-║  Max cached:  ${String(MAX_CACHE_KEYS).padEnd(34)}║
+║  Cache TTL:   ${String(CACHE_TTL + "s").padEnd(34)}     ║
+║  Max cached:  ${String(MAX_CACHE_KEYS).padEnd(34)}      ║
 ║  Sharp:       ${("v" + sharp.versions.sharp).padEnd(34)}║
 ╚══════════════════════════════════════════════════╝
   `);
